@@ -2,7 +2,13 @@ import unittest
 
 from twenty_four_rl.game24 import extract_answer, has_r1_format, solve_24, validate_expression
 from twenty_four_rl.evaluate import evaluate_completions
-from twenty_four_rl.rewards import correctness_reward_func, format_reward_func
+from twenty_four_rl.rewards import (
+    closeness_reward_func,
+    correctness_reward_func,
+    expression_reward_func,
+    format_reward_func,
+    structure_reward_func,
+)
 
 
 class Game24ValidationTest(unittest.TestCase):
@@ -41,6 +47,17 @@ class RewardTest(unittest.TestCase):
         completions = ["<think>x</think><answer>(1+3)*(6+0)</answer>"]
         self.assertEqual(format_reward_func(completions), [0.2])
         self.assertEqual(correctness_reward_func(completions, numbers=[[1, 3, 6, 0]]), [0.0])
+
+    def test_partial_rewards(self):
+        completions = [
+            "<think>x</think><answer>(12-5)*3*2</answer>",
+            "<think>x</think><answer>(12-5)*3*2=42</answer>",
+        ]
+        numbers = [[2, 3, 5, 12], [2, 3, 5, 12]]
+
+        self.assertEqual(expression_reward_func(completions, numbers=numbers), [0.2, 0.0])
+        self.assertGreater(closeness_reward_func(completions, numbers=numbers)[0], 0.0)
+        self.assertEqual(structure_reward_func(completions), [0.1, 0.0])
 
 
 class EvaluationTest(unittest.TestCase):

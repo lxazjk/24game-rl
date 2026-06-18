@@ -42,10 +42,13 @@
 - `evaluate.py` 增加 `--num-samples`，支持多候选 solved@N 评估。
 - 清理旧中间 checkpoint，`outputs/` 从 119G 降到 5.8G；训练配置改为默认只保存最终 checkpoint。
 - 编写了背景知识与完整流程文档。
+- 增加合法表达式奖励和接近 24 的距离奖励，减少纯 correctness reward 的稀疏性。
+- shaped GRPO-from-SFT 50-step：trainer eval correctness mean 为 0.0125，100 条难例 `solved@1=1/100`，`solved@4=17/100`。提升很小，但方向优于原 50-step 的 16/100。
+- 删除旧 GRPO checkpoint，只保留 `sft-qwen-24-strong/checkpoint-final` 和当前最好 `grpo-qwen-24-from-sft-shaped-step50/checkpoint-final`，`outputs/` 保持约 5.8G。
 
 ### 待完成
 
-- 从 SFT strong checkpoint 继续更长 GRPO 训练。
+- 从 shaped reward 版本继续更长 GRPO 训练。
 - 保存 reward/accuracy 曲线和 checkpoint。
 - 完成分布内、分布外评估；若数据源恢复不可解样本，再补负例评估。
 - 补充最终实验结果和案例分析。

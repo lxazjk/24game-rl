@@ -53,8 +53,11 @@ SFT 实验结果：
 | 实验 | 训练样本 | eval 样本 | step | eval reward | correctness reward | solved@1 | solved@4 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | grpo-from-sft-step50 | 400 | 20 | 50 | 0.2950 | 0.0000 | 1/100 | 16/100 |
+| grpo-from-sft-shaped-step50 | 400 | 20 | 50 | 0.6625 | 0.0125 | 1/100 | 17/100 |
 
 训练窗口中 correctness reward 曾出现非零值，说明 verifier 奖励能被模型采到。独立评估中，贪心 `solved@1` 只有 1%，但采样 4 次的 `solved@4` 达到 16%，说明模型已经能生成部分正确表达式，只是策略还不稳定。
+
+进一步加入两项部分奖励：合法表达式奖励和接近 24 的距离奖励。50-step 小实验把 trainer eval correctness 从 0 提到 0.0125，`solved@4` 从 16/100 小幅到 17/100，说明方向有效但训练长度仍明显不足。
 
 ## 现象分析
 
@@ -74,10 +77,11 @@ SFT 实验结果：
 - SFT full checkpoint 的格式明显稳定，但没有学会精确算术搜索；在 100 条难例上 solved rate 仍为 0。
 - SFT v2 的 completion-only masking 在当前 tokenizer 下不可靠，不建议作为后续默认方案。
 - 从 SFT checkpoint 继续 GRPO 后，正确答案开始在采样中出现；短训练的主要问题从“完全不会”变成“命中率低、贪心不稳”。
+- 部分奖励能让训练指标更连续，但 50 step 只带来很小的独立评估提升。
 
 ## 结论
 
-当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。短训练结果证明链路可运行，且 GRPO-from-SFT 已能在采样中生成正确解，但还没有达到稳定求解。
+当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。短训练结果证明链路可运行，且 shaped GRPO-from-SFT 已能在采样中生成更多正确解，但还没有达到稳定求解。
 
 要完成最终高质量作业，还需要让模型真正进行搜索或验证。单纯 SFT 容易学到输出模板和局部算式模式，但没有可靠学会 24 点组合搜索；后续 GRPO 应从 SFT checkpoint 起步，并提高正确性奖励采样覆盖。
 

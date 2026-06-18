@@ -38,8 +38,9 @@ f26f2dd Add SFT warmup and experiment reports
 | SFT strong hard eval | 0/100 |
 | GRPO-from-SFT 50-step `solved@1` | 1/100 |
 | GRPO-from-SFT 50-step `solved@4` | 16/100 |
+| Shaped GRPO-from-SFT 50-step `solved@4` | 17/100 |
 
-短训练已经证明工程链路和 verifier reward 可运行，但模型还没有稳定学会 24 点。后续若继续训练，应从 `outputs/sft-qwen-24-strong/checkpoint-final` 出发，并保持 `save_strategy: "no"`，避免本地 checkpoint 过多。
+短训练已经证明工程链路和 verifier reward 可运行，但模型还没有稳定学会 24 点。后续若继续训练，应从 shaped reward 版本继续，并保持 `save_strategy: "no"`，避免本地 checkpoint 过多。
 
 ## GitHub 发布状态
 

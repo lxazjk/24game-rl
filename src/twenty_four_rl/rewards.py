@@ -28,6 +28,28 @@ def correctness_reward_func(completions: list[str], **kwargs: Any) -> list[float
     return rewards
 
 
+def expression_reward_func(completions: list[str], **kwargs: Any) -> list[float]:
+    rewards: list[float] = []
+    for idx, completion in enumerate(completions):
+        numbers = _numbers_from_kwargs(idx, kwargs)
+        result = validate_expression(completion, numbers)
+        rewards.append(0.2 if result.value is not None else 0.0)
+    return rewards
+
+
+def closeness_reward_func(completions: list[str], **kwargs: Any) -> list[float]:
+    rewards: list[float] = []
+    for idx, completion in enumerate(completions):
+        numbers = _numbers_from_kwargs(idx, kwargs)
+        result = validate_expression(completion, numbers)
+        if result.value is None:
+            rewards.append(0.0)
+            continue
+        distance = abs(float(result.value) - 24.0)
+        rewards.append(0.3 * max(0.0, 1.0 - min(distance / 24.0, 1.0)))
+    return rewards
+
+
 def structure_reward_func(completions: list[str], **_: Any) -> list[float]:
     """Small shaping reward for keeping the final answer compact."""
     rewards: list[float] = []
@@ -37,8 +59,14 @@ def structure_reward_func(completions: list[str], **_: Any) -> list[float]:
             rewards.append(0.0)
             continue
         answer = answer_match.group(1).strip()
-        rewards.append(0.1 if 3 <= len(answer) <= 80 else 0.0)
+        rewards.append(0.1 if 3 <= len(answer) <= 80 and "=" not in answer else 0.0)
     return rewards
 
 
-reward_funcs = [format_reward_func, structure_reward_func, correctness_reward_func]
+reward_funcs = [
+    format_reward_func,
+    structure_reward_func,
+    expression_reward_func,
+    closeness_reward_func,
+    correctness_reward_func,
+]

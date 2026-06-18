@@ -1,0 +1,20 @@
+{
+  "epoch": 0.4754,
+  "eval_entropy": 0.2051,
+  "eval_kl": 0.0006262,
+  "eval_reward": 0.6931,
+  "eval_rewards/closeness_reward_func/mean": 0.1868,
+  "eval_rewards/correctness_reward_func/mean": 0.0125,
+  "eval_rewards/expression_reward_func/mean": 0.1975,
+  "eval_rewards/format_reward_func/mean": 0.1975,
+  "eval_rewards/structure_reward_func/mean": 0.09875,
+  "global_step": 300,
+  "max_steps": 300,
+  "train_batch_size": 4,
+  "solved@1": "1/100",
+  "solved@4": "18/100",
+  "solved@16": "38/100",
+  "solved@64": "52/100",
+  "solved@64_temperature_1.1": "58/100",
+  "solved@128_temperature_1.1": "73/100"
+}

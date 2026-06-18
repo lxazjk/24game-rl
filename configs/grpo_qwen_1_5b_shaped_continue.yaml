@@ -1,0 +1,28 @@
+model_name_or_path: outputs/grpo-qwen-24-shaped-step300/checkpoint-final
+output_dir: outputs/grpo-qwen-24-shaped-continue
+
+data:
+  train_path: data/train.jsonl
+  eval_path: data/eval.jsonl
+  negative_path: data/negative.jsonl
+
+training:
+  learning_rate: 0.0000005
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 2
+  num_train_epochs: 1
+  logging_steps: 10
+  save_strategy: "no"
+  eval_strategy: steps
+  eval_steps: 100
+  max_completion_length: 128
+  num_generations: 4
+  beta: 0.04
+  temperature: 0.9
+  report_to: none
+
+generation:
+  max_new_tokens: 128
+  temperature: 0.9
+  top_p: 0.95

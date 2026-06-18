@@ -45,10 +45,12 @@
 - 增加合法表达式奖励和接近 24 的距离奖励，减少纯 correctness reward 的稀疏性。
 - shaped GRPO-from-SFT 50-step：trainer eval correctness mean 为 0.0125，100 条难例 `solved@1=1/100`，`solved@4=17/100`。提升很小，但方向优于原 50-step 的 16/100。
 - 删除旧 GRPO checkpoint，只保留 `sft-qwen-24-strong/checkpoint-final` 和当前最好 `grpo-qwen-24-from-sft-shaped-step50/checkpoint-final`，`outputs/` 保持约 5.8G。
+- 从 shaped checkpoint 继续训练到 300 step：`solved@1=1/100`，`solved@4=18/100`，`solved@16=38/100`，`solved@64=52/100`。
+- 调高采样温度到 1.1 后，`solved@64=58/100`，`solved@128=73/100`。当前最有效路线是多采样加 verifier 选择。
 
 ### 待完成
 
-- 从 shaped reward 版本继续更长 GRPO 训练。
+- 若要继续冲更高指标，优先做显式搜索或 tool-augmented solving。
 - 保存 reward/accuracy 曲线和 checkpoint。
 - 完成分布内、分布外评估；若数据源恢复不可解样本，再补负例评估。
 - 补充最终实验结果和案例分析。

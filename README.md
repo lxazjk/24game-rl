@@ -143,6 +143,6 @@ python -m twenty_four_rl.evaluate \
 ## 目前状态
 
 已完成可复现工程骨架、确定性 24 点校验器、奖励函数、训练与评估入口、作业背景与流程文档。
-已通过 Hugging Face 下载指定数据集并生成 JSONL；当前数据版本没有不可解负例。已完成 SFT warmup、GRPO-from-SFT 50-step 实验和 solved@N 评估。当前最好短实验结果：100 条 hard eval 上 `solved@1=1/100`，`solved@4=17/100`。
+已通过 Hugging Face 下载指定数据集并生成 JSONL；当前数据版本没有不可解负例。已完成 SFT warmup、shaped GRPO 300-step 实验和 solved@N 评估。当前最好结果：100 条 hard eval 上 `solved@1=1/100`，`solved@4=18/100`，`solved@16=38/100`，`solved@128=73/100`。
 
 完整作业报告见 `reports/final_report.md`，要求对照表见 `docs/assignment_checklist.md`，发布 GitHub 的说明见 `docs/github_publish.md`。

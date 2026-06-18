@@ -54,10 +54,13 @@ SFT 实验结果：
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | grpo-from-sft-step50 | 400 | 20 | 50 | 0.2950 | 0.0000 | 1/100 | 16/100 |
 | grpo-from-sft-shaped-step50 | 400 | 20 | 50 | 0.6625 | 0.0125 | 1/100 | 17/100 |
+| grpo-shaped-step300 | 1262 | 20 | 300 | 0.6931 | 0.0125 | 1/100 | 18/100 |
 
 训练窗口中 correctness reward 曾出现非零值，说明 verifier 奖励能被模型采到。独立评估中，贪心 `solved@1` 只有 1%，但采样 4 次的 `solved@4` 达到 16%，说明模型已经能生成部分正确表达式，只是策略还不稳定。
 
 进一步加入两项部分奖励：合法表达式奖励和接近 24 的距离奖励。50-step 小实验把 trainer eval correctness 从 0 提到 0.0125，`solved@4` 从 16/100 小幅到 17/100，说明方向有效但训练长度仍明显不足。
+
+继续从 shaped 50-step checkpoint 训练到 300 step 后，贪心仍是 1/100，`solved@4` 小幅到 18/100；但提高采样预算后效果明显提升：`solved@16=38/100`，`solved@64=52/100`，温度 1.1 下 `solved@64=58/100`，`solved@128=73/100`。当前主要瓶颈不是 verifier，而是模型单次命中率低。
 
 ## 现象分析
 
@@ -77,17 +80,16 @@ SFT 实验结果：
 - SFT full checkpoint 的格式明显稳定，但没有学会精确算术搜索；在 100 条难例上 solved rate 仍为 0。
 - SFT v2 的 completion-only masking 在当前 tokenizer 下不可靠，不建议作为后续默认方案。
 - 从 SFT checkpoint 继续 GRPO 后，正确答案开始在采样中出现；短训练的主要问题从“完全不会”变成“命中率低、贪心不稳”。
-- 部分奖励能让训练指标更连续，但 50 step 只带来很小的独立评估提升。
+- 部分奖励能让训练指标更连续，但贪心输出仍然弱；当前最好策略是多采样后用 verifier 选正确表达式。
 
 ## 结论
 
-当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。短训练结果证明链路可运行，且 shaped GRPO-from-SFT 已能在采样中生成更多正确解，但还没有达到稳定求解。
+当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。300-step shaped GRPO 配合 best-of-128 verifier selection 在 100 条 hard eval 上达到 73/100，但贪心输出仍不稳定。
 
 要完成最终高质量作业，还需要让模型真正进行搜索或验证。单纯 SFT 容易学到输出模板和局部算式模式，但没有可靠学会 24 点组合搜索；后续 GRPO 应从 SFT checkpoint 起步，并提高正确性奖励采样覆盖。
 
 ## 下一步
 
-1. 从 `sft-strong` checkpoint 继续跑更长 GRPO。
-2. 同时报 `solved@1` 和 `solved@N`，区分贪心稳定性和采样可解性。
-3. 增强 reward shaping：对“表达式合法但不等于 24”的答案给小分，对“包含等号/解释”的答案明确扣分。
-4. 完整训练后在 `data/eval.jsonl` 100 条难例上补充成功/失败案例。
+1. 若继续冲更高指标，优先优化解码和 verifier-guided selection，而不是只增加训练 step。
+2. 报告时同时给 `solved@1` 和 `solved@N`，明确区分贪心稳定性和采样可解性。
+3. 若要接近 100/100，需要引入显式搜索或 tool-augmented solver；纯 LLM 单次生成目前不是瓶颈的最优解。

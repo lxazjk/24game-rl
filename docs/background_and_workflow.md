@@ -55,7 +55,7 @@ GRPO（Group Relative Policy Optimization）在同一个 prompt 下采样多条 
 3. 先运行 `python -m twenty_four_rl.evaluate --oracle-solver` 验证评估管线。
 4. 用 `configs/grpo_qwen_1_5b.yaml` 启动 GRPO 训练。
 5. 监控 format reward、correctness reward、KL、completion length、训练 loss。
-6. 每隔固定 step 保存 checkpoint，并在 eval/negative 集上计算 solved rate 和 false positive rate。
+6. 默认只保存最终 checkpoint，避免本地磁盘被中间模型占满。
 7. 选取若干成功/失败案例做定性分析，检查是否存在格式错、数字复用、算式错误、除零、不可解样本瞎编等问题。
 
 ## 6. 结果分析模板
@@ -71,6 +71,6 @@ GRPO（Group Relative Policy Optimization）在同一个 prompt 下采样多条 
 
 ## 7. 当前环境限制
 
-当前工作区已经通过代理下载 Hugging Face 指定数据集，并生成训练/难例评估 JSONL。尚未实际启动 Qwen2.5-1.5B 的完整 GRPO 训练，因此最终实验曲线和模型指标仍需要训练后补充。
+当前工作区已经通过代理下载 Hugging Face 指定数据集，并生成训练/难例评估 JSONL。已完成 SFT warmup 和一轮 GRPO-from-SFT 50-step 小实验；最终长训练曲线和模型指标仍需要后续补充。
 
-短训练实验显示，纯 GRPO 从 instruct 模型直接起步时会遇到明显稀疏奖励问题：模型容易输出解释、等式或空答案，而不是纯表达式。SFT warmup 可以改善格式，但单纯 SFT 仍不能可靠学会组合搜索。更稳妥的完整流程是先用参考解做格式监督 warmup，再从 warmup checkpoint 切换到 GRPO，用 verifier 奖励强化正确性，并报告 solved@1 与 solved@N。
+短训练实验显示，纯 GRPO 从 instruct 模型直接起步时会遇到明显稀疏奖励问题：模型容易输出解释、等式或空答案，而不是纯表达式。SFT warmup 可以改善格式，但单纯 SFT 仍不能可靠学会组合搜索。从 warmup checkpoint 切换到 GRPO 后，采样评估已经出现正确解；后续应继续报告 solved@1 与 solved@N。

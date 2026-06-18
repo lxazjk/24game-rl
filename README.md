@@ -86,6 +86,8 @@ python -m twenty_four_rl.train_grpo \
 - `eval/solved_rate`：分布内和分布外测试集成功率。
 - `eval/false_positive_rate`：不可解样本上输出伪解的比例。
 
+配置默认不保存中间 checkpoint，只在训练结束保存 `checkpoint-final`，避免本地目录被模型文件占满。
+
 快速烟测可以限制步数和样本数：
 
 ```bash
@@ -122,7 +124,20 @@ python -m twenty_four_rl.evaluate \
   --output reports/eval_predictions.jsonl
 ```
 
+采样评估 solved@N：
+
+```bash
+python -m twenty_four_rl.evaluate \
+  --input data/eval.jsonl \
+  --model outputs/grpo-qwen-24/checkpoint-final \
+  --output reports/eval_sample4_predictions.jsonl \
+  --do-sample \
+  --num-samples 4 \
+  --temperature 0.9 \
+  --top-p 0.95
+```
+
 ## 目前状态
 
 已完成可复现工程骨架、确定性 24 点校验器、奖励函数、训练与评估入口、作业背景与流程文档。
-已通过 Hugging Face 下载指定数据集并生成 JSONL；当前数据版本没有不可解负例。已完成 1-step Qwen/GRPO 烟测，尚未启动完整训练。
+已通过 Hugging Face 下载指定数据集并生成 JSONL；当前数据版本没有不可解负例。已完成 SFT warmup、GRPO-from-SFT 50-step 实验和 solved@N 评估。当前最好短实验结果：100 条 hard eval 上 `solved@1=1/100`，`solved@4=16/100`。

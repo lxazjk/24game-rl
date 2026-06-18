@@ -36,12 +36,16 @@
 - 新增 SFT warmup 数据与训练入口：`sft_data.py`、`train_sft.py`、`configs/sft_qwen_1_5b.yaml`。
 - SFT full 1 epoch 在 held-out SFT eval 上 token accuracy 约 0.959，但在 100 条难例上 solved rate 仍为 0/100；说明模型学会格式，但没有可靠学会组合搜索。
 - SFT v2 尝试 `completion_only_loss=True`，但当前 tokenizer 触发大量 prompt/completion mismatch 警告，独立评估输出空答案，不作为默认方案。
+- 完成 `sft-strong` 5 epoch：held-out SFT eval token accuracy 约 0.9644，100 条难例贪心 solved rate 仍为 0/100。
+- 从 `sft-strong` 继续 GRPO 跑 400 条训练样本、50 step：训练中 correctness reward 开始出现非零值。
+- GRPO-from-SFT 50-step 独立评估：100 条难例 `solved@1=1/100`，采样 4 次 `solved@4=16/100`。
+- `evaluate.py` 增加 `--num-samples`，支持多候选 solved@N 评估。
+- 清理旧中间 checkpoint，`outputs/` 从 119G 降到 5.8G；训练配置改为默认只保存最终 checkpoint。
 - 编写了背景知识与完整流程文档。
 
 ### 待完成
 
-- 启动完整 GRPO 训练。
-- 从 SFT full checkpoint 继续 GRPO，并增加 solved@N 多候选评估。
+- 从 SFT strong checkpoint 继续更长 GRPO 训练。
 - 保存 reward/accuracy 曲线和 checkpoint。
-- 完成分布内、分布外、负例三类评估。
+- 完成分布内、分布外评估；若数据源恢复不可解样本，再补负例评估。
 - 补充最终实验结果和案例分析。

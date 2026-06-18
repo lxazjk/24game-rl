@@ -12,8 +12,7 @@ training:
   gradient_accumulation_steps: 2
   num_train_epochs: 1
   logging_steps: 5
-  save_steps: 100
-  save_total_limit: 2
+  save_strategy: "no"
   eval_strategy: steps
   eval_steps: 100
   max_length: 512

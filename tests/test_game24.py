@@ -1,6 +1,7 @@
 import unittest
 
 from twenty_four_rl.game24 import extract_answer, has_r1_format, solve_24, validate_expression
+from twenty_four_rl.evaluate import evaluate_completions
 from twenty_four_rl.rewards import correctness_reward_func, format_reward_func
 
 
@@ -40,6 +41,24 @@ class RewardTest(unittest.TestCase):
         completions = ["<think>x</think><answer>(1+3)*(6+0)</answer>"]
         self.assertEqual(format_reward_func(completions), [0.2])
         self.assertEqual(correctness_reward_func(completions, numbers=[[1, 3, 6, 0]]), [0.0])
+
+
+class EvaluationTest(unittest.TestCase):
+    def test_solved_at_n_uses_any_valid_attempt(self):
+        rows = [{"numbers": [1, 3, 4, 6], "prompt": "unused"}]
+        completions = [
+            [
+                "<think>x</think><answer>1+3+4+6</answer>",
+                "<think>x</think><answer>6/(1-(3/4))</answer>",
+            ]
+        ]
+
+        evaluated, summary = evaluate_completions(rows, completions)
+
+        self.assertEqual(summary["solved"], 1)
+        self.assertTrue(evaluated[0]["valid"])
+        self.assertEqual(evaluated[0]["expression"], "6/(1-(3/4))")
+        self.assertEqual(len(evaluated[0]["attempts"]), 2)
 
 
 if __name__ == "__main__":

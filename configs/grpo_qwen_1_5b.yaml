@@ -14,8 +14,7 @@ training:
   num_train_epochs: 3
   logging_steps: 5
   logging_dir: outputs/grpo-qwen-24/logs
-  save_steps: 100
-  save_total_limit: 3
+  save_strategy: "no"
   eval_strategy: steps
   eval_steps: 100
   max_completion_length: 256

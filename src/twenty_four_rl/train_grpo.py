@@ -26,6 +26,7 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, help="Override training max_steps for smoke runs.")
     parser.add_argument("--limit-train-rows", type=int, help="Use only the first N training rows.")
     parser.add_argument("--limit-eval-rows", type=int, help="Use only the first N eval rows.")
+    parser.add_argument("--output-dir", help="Override output_dir without editing the config file.")
     args = parser.parse_args()
 
     from datasets import Dataset
@@ -33,6 +34,8 @@ def main() -> None:
     from trl import GRPOConfig, GRPOTrainer
 
     config = load_config(args.config)
+    if args.output_dir:
+        config["output_dir"] = args.output_dir
     train_rows = read_jsonl(config["data"]["train_path"])
     eval_path = config["data"].get("eval_path")
     eval_rows = read_jsonl(eval_path) if eval_path and Path(eval_path).exists() else None

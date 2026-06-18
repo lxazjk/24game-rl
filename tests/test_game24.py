@@ -21,6 +21,10 @@ class Game24ValidationTest(unittest.TestCase):
     def test_extract_answer(self):
         self.assertEqual(extract_answer("<think>x</think><answer>(1+2+3)*4</answer>"), "(1+2+3)*4")
 
+    def test_extract_answer_uses_last_answer(self):
+        response = "<answer>1+1+1+1</answer><think>retry</think><answer>(1+2+3)*4</answer>"
+        self.assertEqual(extract_answer(response), "(1+2+3)*4")
+
     def test_format(self):
         self.assertTrue(has_r1_format("<think>x</think><answer>y</answer>"))
         self.assertFalse(has_r1_format("<answer>y</answer>"))
@@ -40,4 +44,3 @@ class RewardTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

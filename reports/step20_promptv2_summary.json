@@ -1,0 +1,13 @@
+{
+  "epoch": 0.25,
+  "eval_entropy": 0.5471489116549492,
+  "eval_kl": 0.0010364799294620753,
+  "eval_reward": 0.09625000273808837,
+  "eval_rewards/correctness_reward_func/mean": 0.0,
+  "eval_rewards/format_reward_func/mean": 0.027500000409781934,
+  "eval_rewards/structure_reward_func/mean": 0.06875000176951289,
+  "global_step": 20,
+  "max_steps": 20,
+  "step": 20,
+  "train_batch_size": 4
+}

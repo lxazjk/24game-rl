@@ -63,6 +63,17 @@ python -m twenty_four_rl.data \
 
 ## GRPO 训练
 
+如果直接 GRPO 输出格式不稳定，可以先做 SFT warmup：
+
+```bash
+python -m twenty_four_rl.sft_data \
+  --train-out data/sft_train.jsonl \
+  --eval-out data/sft_eval.jsonl
+
+python -m twenty_four_rl.train_sft \
+  --config configs/sft_qwen_1_5b.yaml
+```
+
 ```bash
 python -m twenty_four_rl.train_grpo \
   --config configs/grpo_qwen_1_5b.yaml
@@ -82,7 +93,16 @@ python -m twenty_four_rl.train_grpo \
   --config configs/grpo_qwen_1_5b.yaml \
   --max-steps 1 \
   --limit-train-rows 8 \
-  --limit-eval-rows 4
+  --limit-eval-rows 4 \
+  --output-dir outputs/grpo-qwen-24-smoke
+```
+
+训练后可以汇总 checkpoint 指标：
+
+```bash
+python -m twenty_four_rl.summarize_run \
+  outputs/grpo-qwen-24-smoke/checkpoint-1/trainer_state.json \
+  --output reports/smoke_summary.json
 ```
 
 ## 评估

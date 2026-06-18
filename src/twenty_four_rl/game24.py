@@ -25,9 +25,9 @@ class ValidationResult:
 
 def extract_answer(text: str) -> str:
     """Return the expression inside <answer> tags, or the stripped text itself."""
-    match = answer_pattern.search(text or "")
-    if match:
-        return match.group(1).strip()
+    matches = answer_pattern.findall(text or "")
+    if matches:
+        return matches[-1].strip()
     return (text or "").strip()
 
 

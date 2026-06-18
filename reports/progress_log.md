@@ -28,11 +28,20 @@
 - 已用规则求解器评估 `data/eval.jsonl`，100 条难例全部可由 oracle 解出，评估管线通过 sanity check。
 - 已完成 Qwen2.5-1.5B + GRPO 1-step 烟测：8 条训练样本、4 条 eval 样本，训练入口、奖励函数和 checkpoint 保存流程均可运行。
 - 烟测 eval 指标：`eval_reward=0.0875`、`eval_rewards/correctness_reward_func/mean=0`、`eval_rewards/format_reward_func/mean=0.025`，说明未训练模型在极小步数下尚未学会正确输出，符合预期。
+- 增加 `summarize_run.py`，可从 `trainer_state.json` 自动提取关键指标用于阶段总结。
+- 完成两轮 20-step 小实验：旧 prompt 与 promptv2。promptv2 的 eval reward 从 0.0738 提升到 0.0963，但 correctness reward 仍为 0。
+- 独立生成评估显示两个 20-step checkpoint 在前 20 条难例上 solved rate 都是 0/20。
+- 根据预测失败样例修正校验器：当输出多个 `<answer>` 时抽取最后一个答案；并强化 prompt，要求 answer 只包含表达式。
+- 新增 `reports/experiment_report.md`，记录数据现状、短训练结果、失败模式和后续方案。
+- 新增 SFT warmup 数据与训练入口：`sft_data.py`、`train_sft.py`、`configs/sft_qwen_1_5b.yaml`。
+- SFT full 1 epoch 在 held-out SFT eval 上 token accuracy 约 0.959，但在 100 条难例上 solved rate 仍为 0/100；说明模型学会格式，但没有可靠学会组合搜索。
+- SFT v2 尝试 `completion_only_loss=True`，但当前 tokenizer 触发大量 prompt/completion mismatch 警告，独立评估输出空答案，不作为默认方案。
 - 编写了背景知识与完整流程文档。
 
 ### 待完成
 
 - 启动完整 GRPO 训练。
+- 从 SFT full checkpoint 继续 GRPO，并增加 solved@N 多候选评估。
 - 保存 reward/accuracy 曲线和 checkpoint。
 - 完成分布内、分布外、负例三类评估。
 - 补充最终实验结果和案例分析。

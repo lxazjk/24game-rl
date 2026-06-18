@@ -21,7 +21,15 @@ def write_jsonl(path: str | Path, rows: list[dict[str, Any]]) -> None:
             handle.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def generate_with_model(model_name_or_path: str, prompts: list[str], max_new_tokens: int) -> list[str]:
+def generate_with_model(
+    model_name_or_path: str,
+    prompts: list[str],
+    max_new_tokens: int,
+    batch_size: int,
+    do_sample: bool,
+    temperature: float,
+    top_p: float,
+) -> list[str]:
     from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
     tokenizer = AutoTokenizer.from_pretrained(model_name_or_path, trust_remote_code=True)
@@ -33,9 +41,18 @@ def generate_with_model(model_name_or_path: str, prompts: list[str], max_new_tok
     )
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
     outputs: list[str] = []
-    for prompt in prompts:
-        result = generator(prompt, max_new_tokens=max_new_tokens, do_sample=False, return_full_text=False)
-        outputs.append(result[0]["generated_text"])
+    for start in range(0, len(prompts), batch_size):
+        batch = prompts[start : start + batch_size]
+        results = generator(
+            batch,
+            max_new_tokens=max_new_tokens,
+            do_sample=do_sample,
+            temperature=temperature if do_sample else None,
+            top_p=top_p if do_sample else None,
+            return_full_text=False,
+        )
+        for result in results:
+            outputs.append(result[0]["generated_text"])
     return outputs
 
 
@@ -46,9 +63,16 @@ def main() -> None:
     parser.add_argument("--output", help="Optional JSONL prediction output.")
     parser.add_argument("--oracle-solver", action="store_true", help="Use exhaustive search instead of a model.")
     parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--limit-rows", type=int, help="Evaluate only the first N rows.")
+    parser.add_argument("--do-sample", action="store_true", help="Use sampling instead of greedy decoding.")
+    parser.add_argument("--temperature", type=float, default=0.7)
+    parser.add_argument("--top-p", type=float, default=0.95)
     args = parser.parse_args()
 
     rows = read_jsonl(args.input)
+    if args.limit_rows:
+        rows = rows[: args.limit_rows]
     if args.oracle_solver:
         completions = []
         for row in rows:
@@ -57,7 +81,15 @@ def main() -> None:
     else:
         if not args.model:
             raise SystemExit("--model is required unless --oracle-solver is set")
-        completions = generate_with_model(args.model, [row["prompt"] for row in rows], args.max_new_tokens)
+        completions = generate_with_model(
+            args.model,
+            [row["prompt"] for row in rows],
+            args.max_new_tokens,
+            args.batch_size,
+            args.do_sample,
+            args.temperature,
+            args.top_p,
+        )
 
     evaluated = []
     solved = 0
@@ -83,4 +115,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

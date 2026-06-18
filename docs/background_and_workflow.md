@@ -72,3 +72,5 @@ GRPO（Group Relative Policy Optimization）在同一个 prompt 下采样多条 
 ## 7. 当前环境限制
 
 当前工作区已经通过代理下载 Hugging Face 指定数据集，并生成训练/难例评估 JSONL。尚未实际启动 Qwen2.5-1.5B 的完整 GRPO 训练，因此最终实验曲线和模型指标仍需要训练后补充。
+
+短训练实验显示，纯 GRPO 从 instruct 模型直接起步时会遇到明显稀疏奖励问题：模型容易输出解释、等式或空答案，而不是纯表达式。SFT warmup 可以改善格式，但单纯 SFT 仍不能可靠学会组合搜索。更稳妥的完整流程是先用参考解做格式监督 warmup，再从 warmup checkpoint 切换到 GRPO，用 verifier 奖励强化正确性，并报告 solved@1 与 solved@N。

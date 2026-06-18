@@ -16,5 +16,11 @@
   "solved@16": "38/100",
   "solved@64": "52/100",
   "solved@64_temperature_1.1": "58/100",
-  "solved@128_temperature_1.1": "73/100"
+  "solved@128_temperature_1.1": "73/100",
+  "solved@128_temperature_1.3_top_p_1.0": "78/100",
+  "best_of_runs_base_candidate_budget_per_problem": 532,
+  "best_of_runs_base": "89/100",
+  "adaptive_best_of_runs_max_candidate_budget": 8212,
+  "adaptive_best_of_runs_total_candidates": 76240,
+  "adaptive_best_of_runs": "100/100"
 }

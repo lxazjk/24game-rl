@@ -1,0 +1,22 @@
+{
+  "count": 100,
+  "solved": 100,
+  "solved_rate": 1.0,
+  "base_candidate_budget_per_problem": 532,
+  "max_candidate_budget_per_problem": 8212,
+  "adaptive_unsolved_rows": 11,
+  "total_model_candidates": 76240,
+  "source_budgets": {
+    "reports/grpo_shaped_step300_sample4_eval_predictions.jsonl": 4,
+    "reports/grpo_shaped_step300_sample16_eval_predictions.jsonl": 16,
+    "reports/grpo_shaped_step300_sample64_eval_predictions.jsonl": 64,
+    "reports/grpo_shaped_step300_sample64_t11_eval_predictions.jsonl": 64,
+    "reports/grpo_shaped_step300_sample128_t11_eval_predictions.jsonl": 128,
+    "reports/grpo_shaped_step300_sample128_t13_p100_eval_predictions.jsonl": 128,
+    "reports/grpo_shaped_step300_sample128_t13_p100_b_eval_predictions.jsonl": 128,
+    "reports/grpo_shaped_step300_unresolved11_sample512_t13_p100_eval_predictions.jsonl": 512,
+    "reports/grpo_shaped_step300_unresolved5_sample1024_t13_p100_eval_predictions.jsonl": 1024,
+    "reports/grpo_shaped_step300_unresolved4_sample2048_t15_p100_eval_predictions.jsonl": 2048,
+    "reports/grpo_shaped_step300_unresolved1_sample4096_t15_p100_eval_predictions.jsonl": 4096
+  }
+}

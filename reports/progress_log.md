@@ -44,13 +44,15 @@
 - 编写了背景知识与完整流程文档。
 - 增加合法表达式奖励和接近 24 的距离奖励，减少纯 correctness reward 的稀疏性。
 - shaped GRPO-from-SFT 50-step：trainer eval correctness mean 为 0.0125，100 条难例 `solved@1=1/100`，`solved@4=17/100`。提升很小，但方向优于原 50-step 的 16/100。
-- 删除旧 GRPO checkpoint，只保留 `sft-qwen-24-strong/checkpoint-final` 和当前最好 `grpo-qwen-24-from-sft-shaped-step50/checkpoint-final`，`outputs/` 保持约 5.8G。
+- 删除旧 GRPO checkpoint，只保留 `sft-qwen-24-strong/checkpoint-final` 和当前最好 `grpo-qwen-24-shaped-step300/checkpoint-final`，`outputs/` 保持约 5.8G。
 - 从 shaped checkpoint 继续训练到 300 step：`solved@1=1/100`，`solved@4=18/100`，`solved@16=38/100`，`solved@64=52/100`。
 - 调高采样温度到 1.1 后，`solved@64=58/100`，`solved@128=73/100`。当前最有效路线是多采样加 verifier 选择。
+- 使用 temperature 1.3、top-p 1.0 增加采样多样性后，单轮 `solved@128=78/100`。
+- 合并 7 组采样结果并用 verifier 逐题选择正确表达式，候选预算为每题 532 个模型样本，达到 `89/100`。
+- 只对未解题做 adaptive sampling：11 题追加 512 候选后到 `95/100`，剩余 5 题追加 1024 候选后到 `96/100`，剩余 4 题追加 2048 候选后到 `99/100`，最后 1 题追加 4096 候选后到 `100/100`。
 
 ### 待完成
 
-- 若要继续冲更高指标，优先做显式搜索或 tool-augmented solving。
+- 若要继续提升质量，优先降低 adaptive sampling 的候选预算，并补充分布外评估。
 - 保存 reward/accuracy 曲线和 checkpoint。
 - 完成分布内、分布外评估；若数据源恢复不可解样本，再补负例评估。
-- 补充最终实验结果和案例分析。

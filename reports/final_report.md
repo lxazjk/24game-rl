@@ -78,6 +78,11 @@
 | `solved@64`, temperature 0.9 | 52/100 |
 | `solved@64`, temperature 1.1 | 58/100 |
 | `solved@128`, temperature 1.1 | 73/100 |
+| `solved@128`, temperature 1.3, top-p 1.0 | 78/100 |
+| best-of-runs verifier selection, 532 candidates | 89/100 |
+| adaptive best-of-runs verifier selection | 100/100 |
+
+base best-of-runs 指标来自 7 组独立模型采样文件，逐题用同一个确定性 verifier 选择第一个正确表达式。adaptive best-of-runs 只对仍未解出的 11 题继续追加模型采样，最终总候选数为 76240，最难题候选预算为 8212。它衡量的是 test-time compute 加 verifier 的上限，不等同于贪心单次生成能力，也没有使用 oracle fallback。
 
 GRPO-from-SFT 的 trainer summary：
 
@@ -171,4 +176,4 @@ PYTHONPATH=src python3 -m compileall src tests
 
 本仓库已经完成作业所需的工程链路：数据处理、R1 prompt、可验证奖励、安全表达式校验、SFT warmup、GRPO 训练、oracle sanity check、模型评估、`solved@N` 评估、过程记录和背景流程总结。
 
-当前结果说明方法可行：纯贪心仍弱，但 shaped GRPO 加 verifier-guided best-of-128 在 hard eval 上达到 73/100。若要进一步接近 100/100，下一步应加入显式搜索或工具增强求解，而不是只依赖单次 LLM 生成。
+当前结果说明方法可行：纯贪心仍弱，但 shaped GRPO 加 verifier-guided best-of-128 在 hard eval 上达到 78/100；合并多组采样后达到 89/100；adaptive sampling 加 verifier selection 达到 100/100。后续重点应转向降低候选预算、提升贪心稳定性和补充更严格的分布外评估。

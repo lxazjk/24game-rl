@@ -23,12 +23,7 @@
 
 ## 当前提交
 
-```text
-2d6d1aa Add final assignment report
-3b4aa6c Add SFT-started GRPO evaluation
-f26f2dd Add SFT warmup and experiment reports
-4ae27b4 Build GRPO 24-game assignment repo
-```
+本地 git 历史已经包含训练代码、SFT/GRPO 实验、报告、检查清单和 longer best-of-N 结果。最终提交前可用 `git log --oneline` 查看最新哈希。
 
 ## 当前实验结论
 
@@ -40,9 +35,11 @@ f26f2dd Add SFT warmup and experiment reports
 | GRPO-from-SFT 50-step `solved@4` | 16/100 |
 | Shaped GRPO-from-SFT 50-step `solved@4` | 17/100 |
 | Shaped GRPO 300-step `solved@4` | 18/100 |
-| Shaped GRPO 300-step `solved@128` | 73/100 |
+| Shaped GRPO 300-step `solved@128` | 78/100 |
+| Shaped GRPO 300-step best-of-runs | 89/100 |
+| Shaped GRPO 300-step adaptive best-of-runs | 100/100 |
 
-训练已经证明工程链路和 verifier reward 可运行。当前贪心输出仍弱，但 best-of-128 verifier selection 已达到 73/100。后续若继续冲更高指标，应引入显式搜索或工具增强求解，并保持 `save_strategy: "no"`，避免本地 checkpoint 过多。
+训练已经证明工程链路和 verifier reward 可运行。当前贪心输出仍弱，但 best-of-128 verifier selection 已达到 78/100；合并多组采样达到 89/100；adaptive sampling 加 verifier selection 达到 100/100。后续应降低候选预算、补充分布外评估，并保持 `save_strategy: "no"`，避免本地 checkpoint 过多。
 
 ## GitHub 发布状态
 

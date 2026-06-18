@@ -60,7 +60,7 @@ SFT 实验结果：
 
 进一步加入两项部分奖励：合法表达式奖励和接近 24 的距离奖励。50-step 小实验把 trainer eval correctness 从 0 提到 0.0125，`solved@4` 从 16/100 小幅到 17/100，说明方向有效但训练长度仍明显不足。
 
-继续从 shaped 50-step checkpoint 训练到 300 step 后，贪心仍是 1/100，`solved@4` 小幅到 18/100；但提高采样预算后效果明显提升：`solved@16=38/100`，`solved@64=52/100`，温度 1.1 下 `solved@64=58/100`，`solved@128=73/100`。当前主要瓶颈不是 verifier，而是模型单次命中率低。
+继续从 shaped 50-step checkpoint 训练到 300 step 后，贪心仍是 1/100，`solved@4` 小幅到 18/100；但提高采样预算后效果明显提升：`solved@16=38/100`，`solved@64=52/100`，温度 1.1 下 `solved@64=58/100`，`solved@128=73/100`。进一步提高采样多样性到 temperature 1.3、top-p 1.0 后，单轮 `solved@128` 达到 78/100。合并 7 组采样并用 verifier 选择，候选预算为每题 532 个模型样本，达到 89/100。继续只对未解题追加 adaptive sampling 后达到 100/100，总候选数为 76240，最难题候选预算为 8212。当前主要瓶颈不是 verifier，而是模型单次命中率低。
 
 ## 现象分析
 
@@ -84,12 +84,12 @@ SFT 实验结果：
 
 ## 结论
 
-当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。300-step shaped GRPO 配合 best-of-128 verifier selection 在 100 条 hard eval 上达到 73/100，但贪心输出仍不稳定。
+当前已经完成作业工程化链路：数据加载、prompt 构造、奖励函数、安全校验、SFT warmup、GRPO 训练、oracle sanity check、checkpoint 保存、多候选评估和实验汇总。300-step shaped GRPO 配合 best-of-128 verifier selection 在 100 条 hard eval 上达到 78/100；合并多组采样后达到 89/100；adaptive sampling 后达到 100/100，但贪心输出仍不稳定。
 
-要完成最终高质量作业，还需要让模型真正进行搜索或验证。单纯 SFT 容易学到输出模板和局部算式模式，但没有可靠学会 24 点组合搜索；后续 GRPO 应从 SFT checkpoint 起步，并提高正确性奖励采样覆盖。
+高质量结论需要诚实区分单次生成和 test-time compute：单纯 SFT 容易学到输出模板和局部算式模式，但没有可靠学会 24 点组合搜索；GRPO 加 verifier 能显著提高采样中的正确表达式覆盖率，adaptive sampling 则把覆盖率推到 100/100。
 
 ## 下一步
 
-1. 若继续冲更高指标，优先优化解码和 verifier-guided selection，而不是只增加训练 step。
+1. 若继续优化，优先减少达到 100/100 所需的候选数，而不是只增加训练 step。
 2. 报告时同时给 `solved@1` 和 `solved@N`，明确区分贪心稳定性和采样可解性。
-3. 若要接近 100/100，需要引入显式搜索或 tool-augmented solver；纯 LLM 单次生成目前不是瓶颈的最优解。
+3. 后续重点是降低 adaptive sampling 的候选预算，并补充更严格的分布外评估；纯 LLM 单次生成目前仍不是瓶颈的最优解。

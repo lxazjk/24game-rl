@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>grpo 学习台</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #637083;
+      --line: #d9dee7;
+      --soft: #eef2f7;
+      --accent: #1f7a68;
+      --accent-2: #3266b8;
+      --warn: #b75f22;
+      --good: #237545;
+      --bad: #a63c3c;
+      --shadow: 0 16px 42px rgba(23, 32, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .side {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 18px;
+      background: #18212b;
+      color: #f7fafc;
+      overflow: auto;
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 760;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      color: #aeb8c6;
+      font-size: 13px;
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+      color: #dbe3ef;
+      padding: 10px 12px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: #f7fafc;
+      color: #17202a;
+    }
+
+    .meter {
+      margin-top: 24px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      color: #c7d0dc;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: #36b28d;
+      transition: width 180ms ease;
+    }
+
+    main {
+      padding: 28px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .intro,
+    .visual,
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro {
+      padding: 24px;
+    }
+
+    .kicker {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 720;
+    }
+
+    .intro h2 {
+      max-width: 760px;
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      margin: 0;
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: #2c3a4b;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .visual {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .visual h3,
+    .card h3,
+    .panel h3 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+
+    .flow {
+      width: 100%;
+      min-height: 250px;
+      display: block;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card,
+    .panel {
+      padding: 20px;
+    }
+
+    .card p,
+    .panel p,
+    li {
+      color: var(--muted);
+    }
+
+    .card p:last-child,
+    .panel p:last-child {
+      margin-bottom: 0;
+    }
+
+    .formula {
+      overflow-x: auto;
+      white-space: nowrap;
+      margin: 14px 0;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #243144;
+    }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .steps li {
+      position: relative;
+      padding: 14px 14px 14px 52px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 760;
+    }
+
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .compare th,
+    .compare td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .compare th {
+      color: #243144;
+      background: #f2f5f9;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+    }
+
+    .control {
+      display: grid;
+      gap: 6px;
+    }
+
+    .control label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #263444;
+      font-weight: 680;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .sim {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .chart {
+      min-height: 310px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+    }
+
+    canvas {
+      width: 100%;
+      height: 310px;
+      display: block;
+    }
+
+    .sample-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .sample {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 760;
+      font-size: 12px;
+    }
+
+    .pos .dot {
+      background: var(--good);
+    }
+
+    .neg .dot {
+      background: var(--bad);
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 3px 8px;
+      background: var(--soft);
+      color: #2f3c4d;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .quiz {
+      display: grid;
+      gap: 14px;
+    }
+
+    .choice {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      padding: 12px 14px;
+      cursor: pointer;
+      color: #263444;
+    }
+
+    .choice:hover {
+      border-color: var(--accent);
+    }
+
+    .choice.correct {
+      border-color: #58a978;
+      background: #edf8f1;
+    }
+
+    .choice.wrong {
+      border-color: #d28484;
+      background: #fff1f1;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent-2);
+      background: #f1f5fb;
+      padding: 12px 14px;
+      border-radius: 6px;
+      color: #334255;
+    }
+
+    .warn {
+      border-left-color: var(--warn);
+      background: #fff5eb;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: #eef2f7;
+      border-radius: 5px;
+      padding: 1px 5px;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .side {
+        position: static;
+        height: auto;
+      }
+
+      .top,
+      .grid,
+      .grid.three,
+      .sim {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        padding: 16px;
+      }
+
+      .intro h2 {
+        font-size: 34px;
+      }
+
+      .sample {
+        grid-template-columns: 30px minmax(0, 1fr);
+      }
+
+      .sample .tag {
+        grid-column: 2;
+        width: fit-content;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="side">
+      <div class="brand">
+        <h1>grpo 学习台</h1>
+        <p>从直觉、公式、流程到 24 点项目落地</p>
+      </div>
+      <nav class="nav" aria-label="学习章节">
+        <button class="active" data-section="idea">直觉</button>
+        <button data-section="formula">公式</button>
+        <button data-section="loop">训练循环</button>
+        <button data-section="project">你的项目</button>
+        <button data-section="simulator">互动模拟</button>
+        <button data-section="quiz">小测验</button>
+      </nav>
+      <div class="meter">
+        <div class="meter-label">
+          <span>学习进度</span>
+          <span id="progressText">1 / 6</span>
+        </div>
+        <div class="bar" aria-hidden="true"><span id="progressBar"></span></div>
+      </div>
+    </aside>
+
+    <main>
+      <div class="top">
+        <section class="intro">
+          <p class="kicker">group relative policy optimization</p>
+          <h2>grpo 的核心：同一题多答几次，奖励高的答案相对变强。</h2>
+          <p>
+            它不训练 critic，而是对同一个 prompt 生成一组答案，用组内奖励均值和方差做相对优势。
+            对 24 点这类可验证任务，程序 verifier 可以直接给奖励，所以 grpo 特别合适。
+          </p>
+          <div class="chips">
+            <span class="chip">无需价值模型</span>
+            <span class="chip">组内相对比较</span>
+            <span class="chip">适合 rule reward</span>
+            <span class="chip">需要采样覆盖</span>
+          </div>
+        </section>
+
+        <section class="visual">
+          <h3>一眼看懂流程</h3>
+          <svg class="flow" viewBox="0 0 520 300" role="img" aria-label="grpo 流程图">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#637083"></path>
+              </marker>
+            </defs>
+            <rect x="18" y="28" width="128" height="62" rx="8" fill="#eaf4f1" stroke="#1f7a68"></rect>
+            <text x="82" y="54" text-anchor="middle" fill="#17202a" font-size="15" font-weight="700">prompt</text>
+            <text x="82" y="76" text-anchor="middle" fill="#637083" font-size="12">同一道题</text>
+
+            <rect x="200" y="20" width="138" height="78" rx="8" fill="#eef2f7" stroke="#9aa6b5"></rect>
+            <text x="269" y="48" text-anchor="middle" fill="#17202a" font-size="15" font-weight="700">policy</text>
+            <text x="269" y="70" text-anchor="middle" fill="#637083" font-size="12">生成 k 个答案</text>
+
+            <rect x="388" y="18" width="112" height="42" rx="8" fill="#edf8f1" stroke="#58a978"></rect>
+            <text x="444" y="45" text-anchor="middle" fill="#17202a" font-size="13">答案 A</text>
+            <rect x="388" y="76" width="112" height="42" rx="8" fill="#fff1f1" stroke="#d28484"></rect>
+            <text x="444" y="103" text-anchor="middle" fill="#17202a" font-size="13">答案 B</text>
+            <rect x="388" y="134" width="112" height="42" rx="8" fill="#edf8f1" stroke="#58a978"></rect>
+            <text x="444" y="161" text-anchor="middle" fill="#17202a" font-size="13">答案 C</text>
+
+            <rect x="200" y="190" width="138" height="76" rx="8" fill="#f1f5fb" stroke="#3266b8"></rect>
+            <text x="269" y="218" text-anchor="middle" fill="#17202a" font-size="15" font-weight="700">reward</text>
+            <text x="269" y="240" text-anchor="middle" fill="#637083" font-size="12">组内标准化</text>
+
+            <rect x="18" y="196" width="128" height="64" rx="8" fill="#fff5eb" stroke="#b75f22"></rect>
+            <text x="82" y="222" text-anchor="middle" fill="#17202a" font-size="15" font-weight="700">update</text>
+            <text x="82" y="244" text-anchor="middle" fill="#637083" font-size="12">带 KL 约束</text>
+
+            <path d="M146 59 H196" stroke="#637083" stroke-width="2" marker-end="url(#arrow)"></path>
+            <path d="M338 58 C360 42 367 38 384 38" stroke="#637083" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+            <path d="M338 58 C362 82 367 96 384 97" stroke="#637083" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+            <path d="M338 58 C360 118 368 151 384 155" stroke="#637083" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+            <path d="M444 176 C430 226 374 226 342 226" stroke="#637083" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+            <path d="M200 226 H150" stroke="#637083" stroke-width="2" marker-end="url(#arrow)"></path>
+            <path d="M82 196 C82 126 82 116 82 94" stroke="#637083" stroke-width="2" fill="none" marker-end="url(#arrow)"></path>
+          </svg>
+        </section>
+      </div>
+
+      <section id="idea" class="section active">
+        <div class="grid three">
+          <article class="card">
+            <h3>1. 为什么不是只看绝对奖励</h3>
+            <p>
+              同一道题可能有多个答案，奖励尺度也会变。grpo 把同一 prompt 的一组答案放在一起比较：
+              比本组平均好，就增加概率；比本组平均差，就降低概率。
+            </p>
+          </article>
+          <article class="card">
+            <h3>2. 为什么不需要 critic</h3>
+            <p>
+              ppo 常用价值模型估计 baseline。grpo 直接用组内平均奖励当参照，省掉 critic，
+              小模型和可验证任务上更轻。
+            </p>
+          </article>
+          <article class="card">
+            <h3>3. 为什么适合 24 点</h3>
+            <p>
+              24 点答案可以程序验证：格式、数字使用、表达式合法性、结果是否为 24。
+              奖励不需要人工打分。
+            </p>
+          </article>
+        </div>
+
+        <div class="panel">
+          <h3>一句话记忆</h3>
+          <p class="note">
+            grpo = 对每个 prompt 采样一组答案，用 verifier 给分，再用组内相对分数更新模型，同时用 KL 限制模型别偏离参考策略太远。
+          </p>
+        </div>
+      </section>
+
+      <section id="formula" class="section">
+        <div class="grid">
+          <article class="card">
+            <h3>优势值</h3>
+            <p>对同一个 prompt 采样 k 个答案，得到奖励 r1...rk：</p>
+            <div class="formula">a_i = (r_i - mean(r_1...r_k)) / (std(r_1...r_k) + eps)</div>
+            <p>
+              这就是“组内相对优势”。奖励高于平均值，优势为正；低于平均值，优势为负。
+            </p>
+          </article>
+
+          <article class="card">
+            <h3>策略更新</h3>
+            <p>用新旧策略概率比做裁剪，避免一步更新过猛：</p>
+            <div class="formula">ratio_i = pi_new(o_i | q) / pi_old(o_i | q)</div>
+            <div class="formula">loss ≈ - min(ratio_i * a_i, clip(ratio_i, 1-e, 1+e) * a_i) + beta * kl</div>
+            <p>
+              正优势答案希望 ratio 变大，负优势答案希望 ratio 变小。KL 项让模型保留原有语言能力。
+            </p>
+          </article>
+        </div>
+
+        <div class="panel">
+          <h3>和 ppo 的差异</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>点</th>
+                <th>ppo</th>
+                <th>grpo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>优势估计</td>
+                <td>通常依赖 value model</td>
+                <td>用同组奖励均值和方差</td>
+              </tr>
+              <tr>
+                <td>额外模型</td>
+                <td>需要 critic</td>
+                <td>不需要 critic</td>
+              </tr>
+              <tr>
+                <td>适用场景</td>
+                <td>通用 RLHF</td>
+                <td>数学、代码、可验证推理任务</td>
+              </tr>
+              <tr>
+                <td>核心风险</td>
+                <td>value 估计误差</td>
+                <td>采样组里没有好答案，奖励信号稀疏</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="loop" class="section">
+        <div class="panel">
+          <h3>训练循环</h3>
+          <ol class="steps">
+            <li>从数据集中取一批 prompt，例如 24 点数字：<code>2, 9, 13, 13</code>。</li>
+            <li>当前 policy 对每个 prompt 采样多个 completion。</li>
+            <li>reward 函数检查每个 completion：格式、表达式、数字 multiset、结果。</li>
+            <li>对同一 prompt 的奖励做组内标准化，得到 advantage。</li>
+            <li>用 grpo loss 更新 policy，正确答案概率上升，错误答案概率下降。</li>
+            <li>用 KL 约束防止模型漂移，保存最终 checkpoint。</li>
+          </ol>
+        </div>
+
+        <div class="grid">
+          <article class="card">
+            <h3>奖励为什么要 shaped</h3>
+            <p>
+              如果只有“完全正确才给 1”，训练早期大多数样本都是 0，模型学不到方向。
+              所以可以加部分奖励：格式正确、表达式合法、接近 24。
+            </p>
+          </article>
+          <article class="card">
+            <h3>但 shaped reward 要克制</h3>
+            <p>
+              部分奖励只负责引导搜索方向，最终指标仍要看严格 verifier：数字必须恰好用一次，结果必须等于 24。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="project" class="section">
+        <div class="grid">
+          <article class="card">
+            <h3>你这个仓库里的对应关系</h3>
+            <table class="compare">
+              <tbody>
+                <tr>
+                  <th>prompt</th>
+                  <td><code>src/twenty_four_rl/prompts.py</code></td>
+                </tr>
+                <tr>
+                  <th>verifier</th>
+                  <td><code>game24.py</code>，用 AST 和 Fraction 精确校验</td>
+                </tr>
+                <tr>
+                  <th>reward</th>
+                  <td><code>rewards.py</code>，格式、结构、表达式、接近度、正确性</td>
+                </tr>
+                <tr>
+                  <th>训练</th>
+                  <td><code>train_sft.py</code> 先 warmup，<code>train_grpo.py</code> 再强化</td>
+                </tr>
+                <tr>
+                  <th>评估</th>
+                  <td><code>evaluate.py</code> 支持 <code>solved@N</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </article>
+
+          <article class="card">
+            <h3>当前实验结论</h3>
+            <p>
+              贪心单次输出仍弱，<code>solved@1 = 1/100</code>。但模型经过 SFT + shaped GRPO 后，
+              在多次采样里能产生正确表达式。
+            </p>
+            <p class="note">
+              单轮 <code>best-of-128 = 78/100</code>；多组采样合并后 <code>89/100</code>；
+              只对未解题继续 adaptive sampling 后 <code>100/100</code>。
+            </p>
+          </article>
+        </div>
+
+        <div class="panel">
+          <h3>这说明什么</h3>
+          <p>
+            你的模型不是“每次都能稳定想对”，而是“正确模式已经在分布里，只是单次命中率低”。
+            verifier-guided selection 把这些稀疏正确样本挑出来，所以 test-time compute 很有效。
+          </p>
+        </div>
+      </section>
+
+      <section id="simulator" class="section">
+        <div class="sim">
+          <article class="panel">
+            <h3>组内优势模拟</h3>
+            <p>
+              调整组大小、正确答案数量和 KL 强度，观察优势值如何改变。绿色样本会被增强，红色样本会被压低。
+            </p>
+            <div class="controls">
+              <div class="control">
+                <label for="groupSize">组大小 <span id="groupSizeText">8</span></label>
+                <input id="groupSize" type="range" min="4" max="16" value="8" />
+              </div>
+              <div class="control">
+                <label for="goodCount">正确样本数 <span id="goodCountText">2</span></label>
+                <input id="goodCount" type="range" min="1" max="8" value="2" />
+              </div>
+              <div class="control">
+                <label for="klWeight">KL 强度 <span id="klWeightText">0.04</span></label>
+                <input id="klWeight" type="range" min="0" max="20" value="4" />
+              </div>
+            </div>
+            <div class="note warn">
+              如果一组里没有任何好答案，grpo 很难知道该往哪里走。这就是为什么 24 点项目里多采样很关键。
+            </div>
+          </article>
+
+          <article class="panel">
+            <h3>当前组</h3>
+            <div class="chart">
+              <canvas id="chart" width="720" height="310"></canvas>
+            </div>
+          </article>
+        </div>
+
+        <div class="panel">
+          <h3>样本详情</h3>
+          <div id="sampleList" class="sample-list"></div>
+        </div>
+      </section>
+
+      <section id="quiz" class="section">
+        <div class="panel">
+          <h3>小测验</h3>
+          <div class="quiz" id="quizBox">
+            <p id="question"></p>
+            <div id="choices"></div>
+            <p id="answerNote" class="note" hidden></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sections = Array.from(document.querySelectorAll(".section"));
+    const navButtons = Array.from(document.querySelectorAll(".nav button"));
+    const progressText = document.querySelector("#progressText");
+    const progressBar = document.querySelector("#progressBar");
+
+    function showSection(id) {
+      sections.forEach((section) => section.classList.toggle("active", section.id === id));
+      navButtons.forEach((button) => button.classList.toggle("active", button.dataset.section === id));
+      const index = navButtons.findIndex((button) => button.dataset.section === id);
+      progressText.textContent = `${index + 1} / ${navButtons.length}`;
+      progressBar.style.width = `${((index + 1) / navButtons.length) * 100}%`;
+      if (id === "simulator") drawSim();
+      if (id === "quiz") renderQuiz();
+    }
+
+    navButtons.forEach((button) => {
+      button.addEventListener("click", () => showSection(button.dataset.section));
+    });
+    showSection("idea");
+
+    const groupSize = document.querySelector("#groupSize");
+    const goodCount = document.querySelector("#goodCount");
+    const klWeight = document.querySelector("#klWeight");
+    const groupSizeText = document.querySelector("#groupSizeText");
+    const goodCountText = document.querySelector("#goodCountText");
+    const klWeightText = document.querySelector("#klWeightText");
+    const sampleList = document.querySelector("#sampleList");
+    const canvas = document.querySelector("#chart");
+    const ctx = canvas.getContext("2d");
+
+    function makeRewards(size, good) {
+      const rewards = [];
+      for (let i = 0; i < size; i += 1) {
+        if (i < good) {
+          rewards.push(0.85 + ((i % 3) * 0.05));
+        } else {
+          rewards.push(0.1 + ((i % 4) * 0.08));
+        }
+      }
+      return rewards;
+    }
+
+    function stats(values) {
+      const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+      const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+      return { mean, std: Math.sqrt(variance) || 1 };
+    }
+
+    function drawSim() {
+      let size = Number(groupSize.value);
+      let good = Math.min(Number(goodCount.value), size);
+      const kl = Number(klWeight.value) / 100;
+      groupSizeText.textContent = size;
+      goodCount.max = size;
+      goodCount.value = good;
+      goodCountText.textContent = good;
+      klWeightText.textContent = kl.toFixed(2);
+
+      const rewards = makeRewards(size, good);
+      const { mean, std } = stats(rewards);
+      const advantages = rewards.map((reward) => (reward - mean) / (std + 0.0001));
+      const updates = advantages.map((advantage) => advantage - kl);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fbfcfe";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const pad = 44;
+      const base = 160;
+      const width = canvas.width - pad * 2;
+      const step = width / size;
+
+      ctx.strokeStyle = "#d9dee7";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad, base);
+      ctx.lineTo(canvas.width - pad, base);
+      ctx.stroke();
+
+      ctx.fillStyle = "#637083";
+      ctx.font = "14px system-ui, sans-serif";
+      ctx.fillText("优势为正：增强", pad, 32);
+      ctx.fillText("优势为负：压低", pad, 292);
+
+      updates.forEach((value, i) => {
+        const x = pad + i * step + step * 0.22;
+        const barWidth = Math.max(12, step * 0.56);
+        const height = Math.min(118, Math.abs(value) * 48);
+        const positive = value >= 0;
+        const y = positive ? base - height : base;
+        ctx.fillStyle = positive ? "#237545" : "#a63c3c";
+        ctx.fillRect(x, y, barWidth, height);
+        ctx.fillStyle = "#263444";
+        ctx.font = "12px system-ui, sans-serif";
+        ctx.fillText(String(i + 1), x + barWidth * 0.25, 180);
+      });
+
+      sampleList.innerHTML = updates.map((value, i) => {
+        const positive = value >= 0;
+        const label = positive ? "增强" : "压低";
+        return `
+          <div class="sample ${positive ? "pos" : "neg"}">
+            <span class="dot">${i + 1}</span>
+            <span>reward ${rewards[i].toFixed(2)}，advantage ${advantages[i].toFixed(2)}</span>
+            <span class="tag">${label}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    [groupSize, goodCount, klWeight].forEach((input) => input.addEventListener("input", drawSim));
+
+    const quiz = [
+      {
+        question: "grpo 为什么不需要 critic？",
+        choices: [
+          "它用同一 prompt 的组内奖励均值作为参照。",
+          "它不需要 reward。",
+          "它只做监督学习。"
+        ],
+        answer: 0,
+        note: "核心是 group relative：同组答案互相比较，直接得到相对优势。"
+      },
+      {
+        question: "24 点任务里 verifier 的职责是什么？",
+        choices: [
+          "替模型直接生成答案。",
+          "检查表达式是否合法、数字是否用对、结果是否为 24。",
+          "替换训练数据。"
+        ],
+        answer: 1,
+        note: "verifier 只判断候选是否正确，训练和采样仍来自模型。"
+      },
+      {
+        question: "为什么 solved@1 很低但 solved@N 可以很高？",
+        choices: [
+          "模型单次最优答案不稳定，但采样分布里已经包含正确表达式。",
+          "评估题变简单了。",
+          "KL 越大越容易正确。"
+        ],
+        answer: 0,
+        note: "这正是你当前实验的现象：单次命中率低，test-time compute 能提高覆盖率。"
+      }
+    ];
+
+    let quizIndex = 0;
+
+    function renderQuiz() {
+      const item = quiz[quizIndex];
+      document.querySelector("#question").textContent = `${quizIndex + 1}. ${item.question}`;
+      const choices = document.querySelector("#choices");
+      const answerNote = document.querySelector("#answerNote");
+      answerNote.hidden = true;
+      answerNote.textContent = "";
+      choices.innerHTML = item.choices.map((choice, index) => (
+        `<button class="choice" data-choice="${index}">${choice}</button>`
+      )).join("");
+
+      choices.querySelectorAll(".choice").forEach((button) => {
+        button.addEventListener("click", () => {
+          const picked = Number(button.dataset.choice);
+          choices.querySelectorAll(".choice").forEach((node, index) => {
+            node.classList.toggle("correct", index === item.answer);
+            node.classList.toggle("wrong", index === picked && picked !== item.answer);
+          });
+          answerNote.hidden = false;
+          answerNote.textContent = item.note;
+          setTimeout(() => {
+            quizIndex = (quizIndex + 1) % quiz.length;
+            renderQuiz();
+          }, 1600);
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -47,11 +48,15 @@ def main() -> None:
         config["training"]["num_train_epochs"] = 1
 
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"], trust_remote_code=True)
+    model_kwargs = {
+        "torch_dtype": "auto",
+        "trust_remote_code": True,
+    }
+    if int(os.environ.get("WORLD_SIZE", "1")) == 1:
+        model_kwargs["device_map"] = "auto"
     model = AutoModelForCausalLM.from_pretrained(
         config["model_name_or_path"],
-        torch_dtype="auto",
-        device_map="auto",
-        trust_remote_code=True,
+        **model_kwargs,
     )
     trainer = SFTTrainer(
         model=model,
@@ -66,4 +71,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

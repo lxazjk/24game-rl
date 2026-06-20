@@ -13,7 +13,7 @@ from .prompts import build_prompt
 number_pattern = re.compile(r"\d+")
 
 
-def parse_numbers(record: dict[str, Any]) -> list[int]:
+def parse_numbers(record: dict[str, Any], allowed_lengths: tuple[int, ...] = (4,)) -> list[int]:
     for key in ("numbers", "nums", "cards", "input", "Puzzles", "puzzles", "puzzle"):
         value = record.get(key)
         if value is None:
@@ -22,15 +22,30 @@ def parse_numbers(record: dict[str, Any]) -> list[int]:
             numbers = [int(item) for item in value]
         else:
             numbers = [int(item) for item in number_pattern.findall(str(value))]
-        if len(numbers) == 4:
+        if len(numbers) in allowed_lengths:
             return numbers
-    raise ValueError(f"could not parse four numbers from record keys: {sorted(record)}")
+    expected = " or ".join(str(length) for length in allowed_lengths)
+    raise ValueError(f"could not parse {expected} numbers from record keys: {sorted(record)}")
 
 
-def to_training_record(numbers: list[int], source: str, solvable: bool | None = None) -> dict[str, Any]:
+def parse_target(record: dict[str, Any], default: int = 24) -> int:
+    for key in ("target", "Target", "goal", "Goal"):
+        value = record.get(key)
+        if value is not None:
+            return int(value)
+    return int(default)
+
+
+def to_training_record(
+    numbers: list[int],
+    source: str,
+    solvable: bool | None = None,
+    target: int = 24,
+) -> dict[str, Any]:
     return {
-        "prompt": build_prompt(numbers),
+        "prompt": build_prompt(numbers, target=target),
         "numbers": numbers,
+        "target": int(target),
         "source": source,
         "solvable": solvable,
     }
@@ -100,12 +115,70 @@ def load_game_of_24() -> list[dict[str, Any]]:
     return rows
 
 
+def load_countdown_3to4(
+    train_limit: int,
+    eval_limit: int,
+    seed: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    from datasets import load_dataset
+
+    dataset = load_dataset("Jiayi-Pan/Countdown-Tasks-3to4", split="train")
+    dataset = dataset.shuffle(seed=seed)
+    train_rows: list[dict[str, Any]] = []
+    eval_rows: list[dict[str, Any]] = []
+    seen_eval_keys: set[tuple[int, tuple[int, ...]]] = set()
+    seen_train_keys: set[tuple[int, tuple[int, ...]]] = set()
+
+    for index, record in enumerate(dataset):
+        numbers = parse_numbers(record, allowed_lengths=(3, 4))
+        target = parse_target(record)
+        if any(number <= 0 for number in numbers):
+            continue
+        if not is_solvable(numbers, target=target):
+            continue
+        key = (target, tuple(sorted(numbers)))
+        row = to_training_record(
+            numbers,
+            "Jiayi-Pan/Countdown-Tasks-3to4",
+            solvable=True,
+            target=target,
+        )
+        row["num_count"] = len(numbers)
+        row["original_index"] = index
+
+        if len(eval_rows) < eval_limit and key not in seen_eval_keys:
+            eval_rows.append(row)
+            seen_eval_keys.add(key)
+            continue
+        if len(train_rows) < train_limit and key not in seen_eval_keys and key not in seen_train_keys:
+            train_rows.append(row)
+            seen_train_keys.add(key)
+        if len(train_rows) >= train_limit and len(eval_rows) >= eval_limit:
+            break
+
+    return train_rows, eval_rows
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Prepare 24-game JSONL files for GRPO.")
+    parser = argparse.ArgumentParser(description="Prepare arithmetic-task JSONL files for GRPO.")
+    parser.add_argument("--dataset", choices=("game24", "countdown"), default="game24")
     parser.add_argument("--train-out", default="data/train.jsonl")
     parser.add_argument("--eval-out", default="data/eval.jsonl")
     parser.add_argument("--negative-out", default="data/negative.jsonl")
+    parser.add_argument("--limit-train-rows", type=int, default=5000)
+    parser.add_argument("--limit-eval-rows", type=int, default=500)
+    parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
+
+    if args.dataset == "countdown":
+        train_rows, eval_rows = load_countdown_3to4(args.limit_train_rows, args.limit_eval_rows, args.seed)
+        write_jsonl(args.train_out, train_rows)
+        write_jsonl(args.eval_out, eval_rows)
+        write_jsonl(args.negative_out, [])
+        print(f"wrote {len(train_rows)} countdown train rows to {args.train_out}")
+        print(f"wrote {len(eval_rows)} countdown eval rows to {args.eval_out}")
+        print(f"wrote 0 negative rows to {args.negative_out}")
+        return
 
     positives, negatives = load_nlile_24_game()
     eval_rows = load_game_of_24()

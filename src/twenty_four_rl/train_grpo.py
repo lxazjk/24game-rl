@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from .rewards import reward_funcs
+from .rewards import REWARD_FUNC_SETS, reward_funcs
 
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:
@@ -48,21 +49,30 @@ def main() -> None:
         config["training"]["num_train_epochs"] = 1
 
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"], trust_remote_code=True)
+    model_kwargs = {
+        "torch_dtype": "auto",
+        "trust_remote_code": True,
+    }
+    if int(os.environ.get("WORLD_SIZE", "1")) == 1:
+        model_kwargs["device_map"] = "auto"
     model = AutoModelForCausalLM.from_pretrained(
         config["model_name_or_path"],
-        torch_dtype="auto",
-        device_map="auto",
-        trust_remote_code=True,
+        **model_kwargs,
     )
 
     training_args = GRPOConfig(
         output_dir=config["output_dir"],
         **config["training"],
     )
+    reward_set_name = config.get("reward_set", "shaped")
+    selected_reward_funcs = REWARD_FUNC_SETS.get(reward_set_name)
+    if selected_reward_funcs is None:
+        available = ", ".join(sorted(REWARD_FUNC_SETS))
+        raise ValueError(f"unknown reward_set {reward_set_name!r}; available: {available}")
     trainer = GRPOTrainer(
         model=model,
         processing_class=tokenizer,
-        reward_funcs=reward_funcs,
+        reward_funcs=selected_reward_funcs,
         args=training_args,
         train_dataset=Dataset.from_list(train_rows),
         eval_dataset=Dataset.from_list(eval_rows) if eval_rows else None,

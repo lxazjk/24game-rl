@@ -9,11 +9,32 @@ build/
 dist/
 *.egg-info/
 
+.claude/
+.agents/
+.codex/
+
 data/
 outputs/
 checkpoints/
 runs/
 wandb/
+
+reports/*predictions.jsonl
+reports/*stdout.log
+reports/*.pid
+reports/raw_predictions/
+reports/correctness_heavy_*.json
+reports/*distill*.json
+reports/mixed_*.json
+reports/verified_*.json
+reports/grpo_pass1_*.json
+reports/pass1_*.md
+reports/pass1_*.json
+
+configs/*pass1*.yaml
+configs/*verified_distill*.yaml
+configs/*mixed_verified*.yaml
+configs/*correctness_heavy*.yaml
 
 .env
 .DS_Store

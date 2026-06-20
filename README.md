@@ -1,148 +1,238 @@
 # 基于 GRPO 的 24 点游戏求解
 
-本仓库对应课程选题“基于强化学习的 24 点游戏求解”。目标是用可验证奖励（RLVR）训练
-`Qwen/Qwen2.5-1.5B-Instruct`，让模型以
-`<think>...</think><answer>...</answer>` 格式输出 24 点表达式。
+本仓库对应课程选题“基于强化学习的 24 点游戏求解”。目标是使用可验证奖励（RLVR）训练 `Qwen/Qwen2.5-1.5B-Instruct`，让模型以：
+
+```text
+<think>...</think><answer>...</answer>
+```
+
+格式输出合法 24 点表达式。项目还实现了 Countdown bonus：3–4 个数字、任意 target 的算式求解。
+
+## 当前效果
+
+一句话总结：
+
+> **GRPO 没有显著提升 greedy/pass@1，但显著提升了采样候选质量；模型更适合作为 verifier-guided sampler，而不是稳定的一次生成求解器。**
+
+| 指标 | 最好结果 | 说明 |
+| --- | ---: | --- |
+| greedy/pass@1 | `3/100` | post-RL SFT/distill；多数 GRPO checkpoint 为 `1/100` |
+| sample@16 | `45/100` | correctness-heavy GRPO step50 |
+| sample@128 | 约 `78/100` | 保守报告口径 |
+| best-of-runs | `89/100` | 多组采样 + verifier selection |
+| adaptive best-of-runs | `100/100` | 总候选 `76,240`，最大单题预算 `8,212` |
+| Countdown zero-shot sample@16 | `12/100` | 24-game checkpoint 迁移到 arbitrary target |
+| Countdown GRPO sample@16 | `16/100` | 50-step Countdown GRPO 后小幅提升 |
+
+注意：`100/100` 是 test-time sampling + verifier selection，不是 greedy/pass@1。
 
 ## 作业要求对齐
 
-- 任务：给定 4 个 1-13 的整数，输出只使用这些数字一次且结果为 24 的算式。
-- 方法：使用 TRL `GRPOTrainer` 实现 GRPO，奖励由程序判定，无需奖励模型。
-- 训练集：优先使用 `nlile/24-game` 中 `solvable=True` 的样本。
-- 测试集：使用 `test-time-compute/game-of-24` 的低 solved-rate 难例，并标记是否出现在训练组合中。
-- 负例检查：若当前数据版本提供 `solvable=False` 样本，则用于观察模型是否瞎编。
-- 输出：训练配置、奖励曲线/准确率记录、定量评估、定性案例与过程总结。
+- 模型：`Qwen/Qwen2.5-1.5B-Instruct`。
+- 方法：TRL `GRPOTrainer`，程序 verifier 作为 reward，不训练神经 reward model。
+- 输入：4 个 1–13 整数，或 bonus 中 3–4 个数 + 任意 target。
+- 输出：R1 风格 `<think>...</think><answer>...</answer>`。
+- Verifier：检查 `<answer>`、合法字符、数字 multiset、安全 AST、精确 `Fraction` 计算、是否等于 target。
+- 评估：greedy/pass@1、sample@N、best-of-runs、adaptive verifier selection、定性错误分析。
+- Bonus：支持 `Jiayi-Pan/Countdown-Tasks-3to4` 的 target-aware 数据、reward 和 evaluation。
 
-## 仓库结构
+## 精简代码结构
 
 ```text
 src/twenty_four_rl/
-  game24.py          # 24 点表达式抽取、校验、穷举求解器
-  rewards.py         # GRPO 可验证奖励函数
-  data.py            # Hugging Face 数据集加载与 prompt 构造
-  prompts.py         # R1 风格提示词模板
-  train_grpo.py      # TRL GRPO 训练入口
-  evaluate.py        # 模型/规则求解器评估入口
+  game24.py              # verifier、safe AST、Fraction 计算、oracle solver
+  prompts.py             # R1 prompt，支持 target-aware Countdown
+  rewards.py             # GRPO reward functions，支持 shaped / correctness-heavy
+  data.py                # 24-game 和 Countdown JSONL 数据生成
+  sft_data.py            # SFT warmup 数据生成
+  train_sft.py           # SFTTrainer 入口
+  train_grpo.py          # GRPOTrainer 入口
+  evaluate.py            # greedy/sample@N/oracle 评估
+  aggregate_predictions.py  # best-of-runs/adaptive 聚合
+  data_diagnostics.py       # 数据 overlap / negative 诊断
+  summarize_run.py          # trainer_state 摘要
+  build_distill_data.py     # 实验性：verified-sample distillation 数据构造
+```
+
+建议主报告只突出前 10 个文件；`build_distill_data.py` 作为 pass@1 改进实验工具即可。
+
+## 推荐保留的配置
+
+```text
 configs/
+  sft_qwen_1_5b.yaml
+  sft_qwen_1_5b_strong.yaml
   grpo_qwen_1_5b.yaml
-tests/
-  test_game24.py
-docs/
-  assignment_checklist.md
-  background_and_workflow.md
-  github_publish.md
-reports/
-  final_report.md
-  progress_log.md
+  grpo_qwen_1_5b_from_sft.yaml
+  grpo_qwen_1_5b_shaped_continue.yaml
+  grpo_qwen_1_5b_countdown_from_24.yaml
 ```
 
-## 环境准备
-
-建议使用 Python 3.10+ 和 CUDA GPU 环境。
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## 本地确定性验证
-
-```bash
-python -m unittest discover -s tests
-python -m compileall src tests
-```
+其他 pass@1、correctness-heavy、verified-distill 配置建议作为实验附录或移到 `configs/experiments/`，避免主目录显得混乱。
 
 ## 数据准备
 
-脚本通过 Hugging Face `datasets` 加载作业指定数据集。为避免评估口径混乱，不使用本地生成数据替代。2026-06-18 实测 `nlile/24-game` 和 `test-time-compute/game-of-24` 都是 1362 条可解样本，且基本覆盖同一批 4 数字组合；脚本会在测试记录中写入 `seen_in_train`，并默认导出 solved rate 最低的 100 条可解难例。若后续数据版本恢复 `solvable=False` 负例，脚本会自动写入 `data/negative.jsonl`。
+主任务：
 
 ```bash
-python -m twenty_four_rl.data \
+PYTHONPATH=src python3 -m twenty_four_rl.data \
   --train-out data/train.jsonl \
   --eval-out data/eval.jsonl \
   --negative-out data/negative.jsonl
-```
 
-## GRPO 训练
-
-如果直接 GRPO 输出格式不稳定，可以先做 SFT warmup：
-
-```bash
-python -m twenty_four_rl.sft_data \
+PYTHONPATH=src python3 -m twenty_four_rl.sft_data \
   --train-out data/sft_train.jsonl \
   --eval-out data/sft_eval.jsonl
-
-python -m twenty_four_rl.train_sft \
-  --config configs/sft_qwen_1_5b.yaml
 ```
 
+Countdown bonus：
+
 ```bash
-python -m twenty_four_rl.train_grpo \
-  --config configs/grpo_qwen_1_5b.yaml
+PYTHONPATH=src python3 -m twenty_four_rl.data \
+  --dataset countdown \
+  --train-out data/countdown_train.jsonl \
+  --eval-out data/countdown_eval.jsonl \
+  --negative-out data/countdown_negative.jsonl \
+  --limit-train-rows 1000 \
+  --limit-eval-rows 100
 ```
 
-默认配置偏保守，便于先跑通。正式实验建议记录：
+当前数据限制：
 
-- `reward/format`：是否遵循 `<think>` 和 `<answer>` 标签。
-- `reward/correctness`：表达式是否合法且等于 24。
-- `eval/solved_rate`：分布内和分布外测试集成功率。
-- `eval/false_positive_rate`：不可解样本上输出伪解的比例。
+- `data/eval.jsonl` 是 low solved-rate hard eval，但数字组合与 train 100% 重合；报告中不声称严格 OOD 泛化。
+- 当前 `negative.jsonl` 为空，因为当前 Hugging Face 数据快照没有 `solvable=False` 样本。
 
-配置默认不保存中间 checkpoint，只在训练结束保存 `checkpoint-final`，避免本地目录被模型文件占满。
+## 训练
 
-快速烟测可以限制步数和样本数：
+SFT warmup：
 
 ```bash
-python -m twenty_four_rl.train_grpo \
-  --config configs/grpo_qwen_1_5b.yaml \
-  --max-steps 1 \
-  --limit-train-rows 8 \
-  --limit-eval-rows 4 \
-  --output-dir outputs/grpo-qwen-24-smoke
+PYTHONPATH=src python3 -m twenty_four_rl.train_sft \
+  --config configs/sft_qwen_1_5b_strong.yaml
 ```
 
-训练后可以汇总 checkpoint 指标：
+GRPO 主实验：
 
 ```bash
-python -m twenty_four_rl.summarize_run \
-  outputs/grpo-qwen-24-smoke/checkpoint-1/trainer_state.json \
-  --output reports/smoke_summary.json
+PYTHONPATH=src python3 -m twenty_four_rl.train_grpo \
+  --config configs/grpo_qwen_1_5b_shaped_continue.yaml \
+  --max-steps 300 \
+  --limit-train-rows 1262 \
+  --limit-eval-rows 20 \
+  --output-dir outputs/grpo-qwen-24-shaped-continue
+```
+
+Countdown bonus 短训：
+
+```bash
+PYTHONPATH=src python3 -m twenty_four_rl.train_grpo \
+  --config configs/grpo_qwen_1_5b_countdown_from_24.yaml \
+  --max-steps 50 \
+  --limit-train-rows 1000 \
+  --limit-eval-rows 100 \
+  --output-dir outputs/grpo-qwen-countdown-from-24-step50
 ```
 
 ## 评估
 
-先用规则求解器验证数据和评估管线：
+Oracle sanity check：
 
 ```bash
-python -m twenty_four_rl.evaluate --input data/eval.jsonl --oracle-solver
+PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+  --input data/eval.jsonl \
+  --oracle-solver \
+  --summary-output reports/oracle_eval_summary.json
 ```
 
-评估训练后的模型：
+Greedy：
 
 ```bash
-python -m twenty_four_rl.evaluate \
+PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
   --input data/eval.jsonl \
-  --model outputs/grpo-qwen-24/checkpoint-final \
-  --output reports/eval_predictions.jsonl
+  --model outputs/grpo-qwen-24-shaped-step300/checkpoint-final \
+  --summary-output reports/grpo_shaped_step300_eval_summary.json \
+  --batch-size 4 \
+  --max-new-tokens 128
 ```
 
-采样评估 solved@N：
+Sample@N：
 
 ```bash
-python -m twenty_four_rl.evaluate \
+PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
   --input data/eval.jsonl \
-  --model outputs/grpo-qwen-24/checkpoint-final \
-  --output reports/eval_sample4_predictions.jsonl \
+  --model outputs/grpo-qwen-24-shaped-step300/checkpoint-final \
   --do-sample \
-  --num-samples 4 \
-  --temperature 0.9 \
-  --top-p 0.95
+  --temperature 1.1 \
+  --top-p 0.95 \
+  --num-samples 128 \
+  --summary-output reports/grpo_shaped_step300_sample128_summary.json \
+  --batch-size 4 \
+  --max-new-tokens 128
 ```
 
-## 目前状态
+Countdown bonus：
 
-已完成可复现工程骨架、确定性 24 点校验器、奖励函数、训练与评估入口、作业背景与流程文档。
-已通过 Hugging Face 下载指定数据集并生成 JSONL；当前数据版本没有不可解负例。已完成 SFT warmup、shaped GRPO 300-step 实验和 solved@N 评估。当前最好单轮采样结果：100 条 hard eval 上 `solved@1=1/100`，`solved@4=18/100`，`solved@16=38/100`，`solved@128=78/100`。合并多组采样并用 verifier 选择后达到 `89/100`；继续只对未解题做 adaptive sampling 后达到 `100/100`。该结果没有使用 oracle fallback，最大候选预算为最难题 8212 个模型样本。
+```bash
+PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+  --input data/countdown_eval.jsonl \
+  --oracle-solver \
+  --summary-output reports/countdown_oracle_eval_summary.json
 
-完整作业报告见 `reports/final_report.md`，要求对照表见 `docs/assignment_checklist.md`，发布 GitHub 的说明见 `docs/github_publish.md`。
+PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+  --input data/countdown_eval.jsonl \
+  --model outputs/grpo-qwen-24-correctness-heavy-step50/checkpoint-final \
+  --do-sample \
+  --num-samples 16 \
+  --temperature 1.1 \
+  --top-p 0.95 \
+  --summary-output reports/countdown_from_24_sample16_summary.json
+```
+
+## 验证
+
+```bash
+PYTHONPATH=src python3 -m unittest discover -s tests
+PYTHONPATH=src python3 -m compileall src tests
+```
+
+## 结果文件建议
+
+建议保留：
+
+```text
+reports/final_report.md
+reports/progress_log.md
+reports/data_diagnostics_summary.json
+reports/oracle_eval_summary.json
+reports/negative_oracle_eval_summary.json
+reports/grpo_shaped_step300_summary.json
+reports/grpo_shaped_step300_best_of_runs_summary.json
+reports/grpo_shaped_step300_adaptive_best_of_runs_summary.json
+reports/countdown_oracle_eval_summary.json
+reports/countdown_from_24_sample16_summary.json
+reports/countdown_grpo_step50_sample16_summary.json
+```
+
+建议归档或不提交：
+
+```text
+reports/*predictions.jsonl
+reports/*stdout.log
+reports/*.pid
+outputs/
+data/verified_sft_*.jsonl
+data/mixed_sft_verified_*.jsonl
+```
+
+这些文件用于实验追踪，但会让提交显得很乱；最终报告引用 summary 即可。
+
+## 最终结论
+
+本项目完成了 24 点 GRPO/RLVR 主任务和 Countdown bonus。实验表明：
+
+- SFT/GRPO 未能让 `Qwen2.5-1.5B` 成为稳定的 1-shot 24 点求解器；最好 greedy 只有 `3/100`。
+- GRPO 明显提高了采样候选质量，配合 verifier selection 可以从 sample@N 获得高成功率。
+- best-of-runs 和 adaptive sampling 能分别达到 `89/100` 和 `100/100`，但代价是较高 test-time compute。
+- Countdown bonus 证明了 verifier/reward/evaluate 可以推广到 arbitrary target，但短训结果仍然有限。
+
+因此，最终定位是：**一个有效的 RLVR + verifier-guided arithmetic sampler，而不是可靠的一次生成求解器。**

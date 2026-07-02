@@ -42,19 +42,16 @@
 
 | 模块 | 文件 | 作用 |
 | --- | --- | --- |
-| Verifier / Solver | `src/twenty_four_rl/game24.py` | 抽取 `<answer>`，安全 AST 解析，数字 multiset 校验，`Fraction` 精确计算，oracle solver |
-| Prompt | `src/twenty_four_rl/prompts.py` | 构造 R1 风格 prompt；支持 24 点和 Countdown target |
-| Reward | `src/twenty_four_rl/rewards.py` | GRPO rule-based reward；支持 shaped / correctness-heavy reward sets |
-| 数据 | `src/twenty_four_rl/data.py` | 生成 24-game 与 Countdown JSONL 数据 |
-| SFT 数据 | `src/twenty_four_rl/sft_data.py` | 从参考解生成 SFT warmup 数据 |
-| SFT 训练 | `src/twenty_four_rl/train_sft.py` | TRL SFTTrainer 入口 |
-| GRPO 训练 | `src/twenty_four_rl/train_grpo.py` | TRL GRPOTrainer 入口 |
-| 评估 | `src/twenty_four_rl/evaluate.py` | greedy、sample@N、oracle、失败原因统计 |
-| 聚合 | `src/twenty_four_rl/aggregate_predictions.py` | best-of-runs / adaptive verifier selection |
-| 诊断 | `src/twenty_four_rl/data_diagnostics.py` | train/eval overlap 与 negative set 统计 |
-| 蒸馏工具 | `src/twenty_four_rl/build_distill_data.py` | 从 verifier-approved samples 构造 SFT 数据；实验性 |
-
-建议最终提交时突出前 9 个模块，`build_distill_data.py` 作为 pass@1 改进实验工具即可。
+| Verifier / Solver | `src/core/game24.py` | 抽取 `<answer>`，安全 AST 解析，数字 multiset 校验，`Fraction` 精确计算，oracle solver |
+| Prompt | `src/core/prompts.py` | 构造 R1 风格 prompt；支持 24 点和 Countdown target |
+| Reward | `src/core/rewards.py` | GRPO rule-based reward；支持 shaped / correctness-heavy reward sets |
+| 数据 | `src/data/build.py` | 生成 24-game 与 Countdown JSONL 数据 |
+| SFT 数据 | `src/data/sft.py` | 从参考解生成 SFT warmup 数据 |
+| SFT 训练 | `src/train/sft.py` | TRL SFTTrainer 入口 |
+| GRPO 训练 | `src/train/grpo.py` | TRL GRPOTrainer 入口 |
+| 评估 | `src/eval/evaluate.py` | greedy、sample@N、oracle、失败原因统计 |
+| 聚合 | `src/eval/aggregate.py` | best-of-runs / adaptive verifier selection |
+| 诊断 | `src/data/diagnostics.py` | train/eval overlap 与 negative set 统计 |
 
 ---
 
@@ -226,9 +223,9 @@ Reward 分为：
 ### 数据准备
 
 ```bash
-PYTHONPATH=src python3 -m twenty_four_rl.data
-PYTHONPATH=src python3 -m twenty_four_rl.sft_data
-PYTHONPATH=src python3 -m twenty_four_rl.data \
+python -m data.build
+python -m data.sft
+python -m data.build \
   --dataset countdown \
   --train-out data/countdown_train.jsonl \
   --eval-out data/countdown_eval.jsonl \
@@ -240,10 +237,10 @@ PYTHONPATH=src python3 -m twenty_four_rl.data \
 ### 训练
 
 ```bash
-PYTHONPATH=src python3 -m twenty_four_rl.train_sft \
+python -m train.sft \
   --config configs/sft_qwen_1_5b_strong.yaml
 
-PYTHONPATH=src python3 -m twenty_four_rl.train_grpo \
+python -m train.grpo \
   --config configs/grpo_qwen_1_5b_shaped_continue.yaml \
   --max-steps 300 \
   --limit-train-rows 1262 \
@@ -254,7 +251,7 @@ PYTHONPATH=src python3 -m twenty_four_rl.train_grpo \
 ### 评估
 
 ```bash
-PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+python -m eval.evaluate \
   --input data/eval.jsonl \
   --model outputs/grpo-qwen-24-shaped-step300/checkpoint-final \
   --batch-size 4 \
@@ -262,7 +259,7 @@ PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
 ```
 
 ```bash
-PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+python -m eval.evaluate \
   --input data/eval.jsonl \
   --model outputs/grpo-qwen-24-shaped-step300/checkpoint-final \
   --do-sample \
@@ -276,11 +273,11 @@ PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
 ### Countdown bonus eval
 
 ```bash
-PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+python -m eval.evaluate \
   --input data/countdown_eval.jsonl \
   --oracle-solver
 
-PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
+python -m eval.evaluate \
   --input data/countdown_eval.jsonl \
   --model outputs/grpo-qwen-24-correctness-heavy-step50/checkpoint-final \
   --do-sample \
@@ -292,8 +289,8 @@ PYTHONPATH=src python3 -m twenty_four_rl.evaluate \
 ### 验证
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests
-PYTHONPATH=src python3 -m compileall src tests
+python -m unittest discover -s tests
+python -m compileall src tests
 ```
 
 ---

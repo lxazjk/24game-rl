@@ -1,8 +1,8 @@
 import unittest
 
-from twenty_four_rl.aggregate_predictions import aggregate_predictions
-from twenty_four_rl.data_diagnostics import summarize_data
-from twenty_four_rl.game24 import (
+from eval.aggregate import aggregate_predictions
+from data.diagnostics import summarize_data
+from core.game24 import (
     analyze_expression,
     extract_answer,
     has_answer_tag,
@@ -10,10 +10,10 @@ from twenty_four_rl.game24 import (
     solve_24,
     validate_expression,
 )
-from twenty_four_rl.data import parse_numbers
-from twenty_four_rl.evaluate import evaluate_completions
-from twenty_four_rl.prompts import build_prompt
-from twenty_four_rl.rewards import (
+from data.build import parse_numbers
+from eval.evaluate import evaluate_completions
+from core.prompts import build_prompt
+from core.rewards import (
     closeness_reward_func,
     correctness_reward_func,
     expression_reward_func,

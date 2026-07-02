@@ -6,8 +6,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .game24 import is_solvable
-from .prompts import build_prompt
+from core.game24 import is_solvable
+from core.prompts import build_prompt
 
 
 number_pattern = re.compile(r"\d+")

@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 
-from .rewards import REWARD_FUNC_SETS, reward_funcs
+from core.rewards import REWARD_FUNC_SETS, reward_funcs
 
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:

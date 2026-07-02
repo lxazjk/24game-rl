@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .data import parse_numbers
-from .game24 import validate_expression
-from .prompts import build_prompt
+from .build import parse_numbers
+from core.game24 import validate_expression
+from core.prompts import build_prompt
 
 
 def normalize_solution(solution: str) -> str:

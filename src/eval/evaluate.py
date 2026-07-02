@@ -7,7 +7,7 @@ from pathlib import Path
 from statistics import mean, median
 from typing import Any
 
-from .game24 import analyze_expression, solve_24
+from core.game24 import analyze_expression, solve_24
 
 
 def read_jsonl(path: str | Path) -> list[dict[str, Any]]:

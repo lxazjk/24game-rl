@@ -14,25 +14,23 @@
 
 ---
 
-## 2. 当前效果概览
+## 2. 结果概览
 
-一句话总结：
+主要结论：GRPO 未能把 Qwen2.5-1.5B 训练成稳定的单次（1-shot）24 点求解器，但明显提升了采样候选中出现正确表达式的概率；在此基础上用 verifier 做 test-time selection 可以取得较高的成功率。
 
-> **GRPO 没有把 Qwen2.5-1.5B 训练成稳定的 1-shot 24 点求解器，但显著提升了采样候选中出现正确表达式的概率；配合 verifier 做 test-time selection 后效果很好。**
-
-核心结果：
+主要指标如下（评测集为人类通过率最低的 100 道题）：
 
 | 指标 | 最好结果 | 说明 |
 | --- | ---: | --- |
 | greedy / pass@1 | `3/100` | 来自 post-RL SFT/distill；多数 GRPO checkpoint 为 `1/100` |
-| sample@16 | `45/100` | correctness-heavy GRPO step50，是当前较好的 sampler |
-| sample@128 | 约 `78/100` | 保守报告口径；一个 JSONL run 计数为 `81/100` |
+| sample@16 | `45/100` | correctness-heavy GRPO step50，是较好的 sampler |
+| sample@128 | 约 `78/100` | 取保守口径；某次 run 计为 `81/100` |
 | base best-of-runs | `89/100` | 每题 532 个候选，verifier 选第一个正确答案 |
 | adaptive best-of-runs | `100/100` | 总候选 `76,240`，最难题候选预算 `8,212` |
 | Countdown bonus zero-shot sample@16 | `12/100` | 24-game checkpoint 迁移到任意 target 任务 |
 | Countdown bonus GRPO sample@16 | `16/100` | 50-step target-aware Countdown GRPO 后小幅提升 |
 
-这个结果说明：当前模型更适合作为 **verifier-guided sampler**，而不是稳定的 **greedy 1-shot solver**。
+综合来看，该模型更适合作为 verifier 引导的采样器（verifier-guided sampler），而非稳定的单次求解器。
 
 ---
 
@@ -59,7 +57,7 @@
 
 使用作业指定数据集：
 
-| 数据集 | 用途 | 当前实测情况 |
+| 数据集 | 用途 | 实测情况 |
 | --- | --- | --- |
 | `nlile/24-game` | 训练与 SFT 参考解 | 1362 条，当前快照全部可解 |
 | `test-time-compute/game-of-24` | hard eval | 选取 solved-rate 较低的 100 条 |
@@ -79,8 +77,8 @@
 
 数据限制：
 
-- 当前 `data/eval.jsonl` 的 100 道 hard eval 与训练集数字组合全部重合，因此它是 hard eval，不是严格 OOD 泛化测试。
-- 当前 `negative.jsonl` 为空，因此无法从官方数据快照评估不可解题 false-positive。
+- `data/eval.jsonl` 的 100 道 hard eval 与训练集数字组合全部重合，因此它是 hard eval，不是严格 OOD 泛化测试。
+- `negative.jsonl` 为空，因此无法从官方数据快照评估不可解题的 false-positive。
 - Countdown 是 bonus/OOD 扩展，不替代主任务指标。
 
 ---
@@ -110,7 +108,7 @@ Reward 分为：
 | closeness | 鼓励计算值接近 target |
 | correctness | 完全合法且等于 target 才给最高奖励 |
 
-当前代码中 reward 已经 target-aware，因此同一套 verifier 可用于 24 点和 Countdown bonus。
+reward 已经 target-aware，因此同一套 verifier 可用于 24 点和 Countdown bonus。
 
 ---
 
@@ -136,9 +134,7 @@ Reward 分为：
 | correctness-heavy GRPO step50 | `1/100` | `18/100` | `45/100` | 未系统评估 | - | - |
 | post-RL SFT/distill | `3/100` | - | - | - | - | - |
 
-最重要的结论：
-
-> **GRPO 对 greedy/pass@1 的提升非常有限，但对 sampled candidate distribution 的提升明显。**
+可以看到，GRPO 对 greedy / pass@1 的提升非常有限，但明显改变了采样候选的分布。
 
 ### 6.3 Candidate efficiency
 
@@ -151,29 +147,7 @@ Reward 分为：
 
 ---
 
-## 7. Pass@1 改进尝试
-
-为了提高 1-shot，尝试了多种路线：
-
-| 尝试 | greedy result |
-| --- | ---: |
-| pass1 strong GRPO step200b | `0/100` |
-| pass1 8GPU GRPO step100 | `0/100` |
-| pass1 8GPU GRPO step200 | `0/100` |
-| pass1 8GPU GRPO step300 | `0/100` |
-| correctness-heavy GRPO step50 | `1/100` |
-| correctness-heavy GRPO step200 | `1/100` |
-| verified-only distill 400 | `0/100` |
-| mixed verified 400 top1 | `2/100` |
-| mixed verified 400 top3 | `0/100` |
-| full mixed verified top1 | `1/100` |
-| old post-RL SFT/distill | `3/100` |
-
-结论：当前小模型和训练策略下，1-shot 很难通过继续 GRPO/SFT/distillation 稳定拉升。模型主要学会了格式、数字使用和合法表达式，但没有稳定学会精确组合搜索。
-
----
-
-## 8. Countdown bonus
+## 7. Countdown bonus
 
 作业 bonus 要求可参考 Countdown 风格任务。本项目已将 prompt、verifier、reward 和 evaluation 推广到：
 
@@ -183,7 +157,7 @@ Reward 分为：
 
 数据：`Jiayi-Pan/Countdown-Tasks-3to4`。
 
-当前小规模 bonus 结果：
+小规模 bonus 结果：
 
 | 设置 | greedy | sample@4 | sample@16 |
 | --- | ---: | ---: | ---: |
@@ -195,7 +169,7 @@ Reward 分为：
 
 ---
 
-## 9. 定性分析
+## 8. 定性分析
 
 成功样例：
 
@@ -218,7 +192,7 @@ Reward 分为：
 
 ---
 
-## 10. 复现命令
+## 9. 复现命令
 
 ### 数据准备
 
@@ -295,16 +269,15 @@ python -m compileall src tests
 
 ---
 
-## 11. 结论
+## 10. 结论
 
-本项目完成了 24 点 GRPO/RLVR 主任务和 Countdown bonus 扩展。核心技术包括 R1 prompt、确定性 verifier、target-aware reward、SFT warmup、GRPO 训练、greedy/sample@N 评估、best-of-runs 聚合和 Countdown OOD evaluation。
+本项目完成了 24 点 GRPO/RLVR 主任务和 Countdown bonus 扩展，涵盖 R1 prompt、确定性 verifier、target-aware reward、SFT warmup、GRPO 训练、greedy/sample@N 评估、best-of-runs 聚合与 Countdown 评估。
 
-实验结论需要准确表述：
+主要结论：
 
-- SFT 和 GRPO 没有让 Qwen2.5-1.5B 成为稳定的 1-shot 24 点求解器。
-- 多种 pass@1 改进尝试均未显著超过 `3/100`。
-- GRPO 的主要收益是提升采样候选质量：sample@N 和 verifier-guided selection 效果明显。
-- 在 test-time compute 足够高时，adaptive verifier selection 可以达到 `100/100`，但这不是 greedy 能力。
-- Countdown bonus 表明该 verifier/reward 框架可以推广到 arbitrary target，但短训练结果仍然有限。
+- SFT 和 GRPO 没有让 Qwen2.5-1.5B 成为稳定的单次 24 点求解器，greedy 最好为 `3/100`。
+- GRPO 的主要收益在于提升采样候选质量：sample@N 与 verifier 引导的 selection 效果明显。
+- 在 test-time compute 足够高时，adaptive verifier selection 可达到 `100/100`，但这依赖大量采样，并不代表 greedy 能力。
+- Countdown bonus 表明该 verifier/reward 框架可推广到任意 target，但短训练的效果仍然有限。
 
-最终定位：**当前系统是一个有效的 RLVR + verifier-guided arithmetic sampler，而不是可靠的一次生成求解器。**
+综合定位：该系统是一个有效的 RLVR + verifier 引导的算术采样器，而非可靠的单次生成求解器。

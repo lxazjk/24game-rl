@@ -37,5 +37,6 @@ configs/*mixed_verified*.yaml
 configs/*correctness_heavy*.yaml
 
 .env
+.env_proxy
 .DS_Store
 

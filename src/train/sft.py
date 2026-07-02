@@ -21,7 +21,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="SFT warmup for 24-game output format.")
-    parser.add_argument("--config", default="configs/sft_qwen_1_5b.yaml")
+    parser.add_argument("--config", default="configs/sft.yaml")
     parser.add_argument("--max-steps", type=int, help="Override training max_steps for smoke runs.")
     parser.add_argument("--limit-train-rows", type=int, help="Use only the first N training rows.")
     parser.add_argument("--limit-eval-rows", type=int, help="Use only the first N eval rows.")

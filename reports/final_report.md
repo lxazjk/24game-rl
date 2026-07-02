@@ -238,10 +238,10 @@ python -m data.build \
 
 ```bash
 python -m train.sft \
-  --config configs/sft_qwen_1_5b_strong.yaml
+  --config configs/sft.yaml
 
 python -m train.grpo \
-  --config configs/grpo_qwen_1_5b_shaped_continue.yaml \
+  --config configs/grpo_shaped.yaml \
   --max-steps 300 \
   --limit-train-rows 1262 \
   --limit-eval-rows 20 \

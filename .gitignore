@@ -18,6 +18,7 @@ outputs/
 checkpoints/
 runs/
 wandb/
+logs/
 
 reports/*predictions.jsonl
 reports/*stdout.log

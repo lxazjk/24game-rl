@@ -46,8 +46,8 @@ python -m data.build --dataset countdown \
 训练（可选先做 SFT warmup，再进行 GRPO）：
 
 ```bash
-python -m train.sft  --config configs/sft_qwen_1_5b_strong.yaml
-python -m train.grpo --config configs/grpo_qwen_1_5b_shaped_continue.yaml --output-dir outputs/grpo-shaped
+python -m train.sft  --config configs/sft.yaml
+python -m train.grpo --config configs/grpo_shaped.yaml --output-dir outputs/grpo-shaped
 ```
 
 评估。先用 oracle 确认题目可解，再评测模型的 greedy 与 sample@N：
